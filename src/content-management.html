@@ -107,16 +107,32 @@
                     </div>
                     
                     <div className="nav-section">
+                        <div className="nav-title">MAIN SECTIONS</div>
+                        <div className="nav-item" onClick={() => window.location.href = 'index.html'}>
+                            <span className="nav-icon">🏠</span>
+                            <span className="nav-label">DASHBOARD</span>
+                        </div>
+                        <div className="nav-item" onClick={() => window.location.href = 'schedule-management.html'}>
+                            <span className="nav-icon">📅</span>
+                            <span className="nav-label">SCHEDULE</span>
+                        </div>
+                        <div className="nav-item" onClick={() => window.location.href = 'system-settings.html'}>
+                            <span className="nav-icon">⚙️</span>
+                            <span className="nav-label">SETTINGS</span>
+                        </div>
+                    </div>
+                    
+                    <div className="nav-section">
                         <div className="nav-title">QUICK ACTIONS</div>
-                        <div className="nav-item">
+                        <div className="nav-item" onClick={() => window.location.href = 'content-sync.html'}>
                             <span className="nav-icon">🔄</span>
                             <span className="nav-label">SYNC ALL</span>
                         </div>
-                        <div className="nav-item">
+                        <div className="nav-item" onClick={() => window.location.href = 'content-cleanup.html'}>
                             <span className="nav-icon">🗑️</span>
                             <span className="nav-label">CLEANUP</span>
                         </div>
-                        <div className="nav-item">
+                        <div className="nav-item" onClick={() => window.location.href = 'content-analytics.html'}>
                             <span className="nav-icon">📊</span>
                             <span className="nav-label">ANALYTICS</span>
                         </div>

@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Schedule Sync - Trocadero Control System</title>
+    <link rel="stylesheet" href="styles/main.css">
+    <link rel="stylesheet" href="styles/schedule-management.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Roboto+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+</head>
+<body>
+    <div id="root"></div>
+    <canvas id="background-canvas"></canvas>
+    
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+        
+        const ScheduleSyncSystem = () => {
+            const [syncStatus, setSyncStatus] = useState('ready');
+            const [syncProgress, setSyncProgress] = useState(0);
+            
+            const startSync = () => {
+                setSyncStatus('syncing');
+                const interval = setInterval(() => {
+                    setSyncProgress(prev => {
+                        if (prev >= 100) {
+                            clearInterval(interval);
+                            setSyncStatus('complete');
+                            return 100;
+                        }
+                        return prev + 10;
+                    });
+                }, 300);
+            };
+            
+            return (
+                <div className="control-system">
+                    <TopBar />
+                    <div className="main-content">
+                        <Sidebar />
+                        <div className="sync-main">
+                            <h2>SCHEDULE SYNCHRONIZATION</h2>
+                            <div className="sync-status-grid">
+                                <div className={`sync-card ${syncStatus}`}>
+                                    <div className="sync-title">SYNC STATUS</div>
+                                    <div className="sync-value">{syncStatus.toUpperCase()}</div>
+                                    <div className="sync-progress">
+                                        <div className="progress-bar">
+                                            <div className="progress-fill" style={{width: `${syncProgress}%`}}></div>
+                                        </div>
+                                        <span>{syncProgress}%</span>
+                                    </div>
+                                </div>
+                                <div className="sync-card">
+                                    <div className="sync-title">EVENTS SYNCED</div>
+                                    <div className="sync-value">{Math.round(syncProgress * 0.24)}/24</div>
+                                </div>
+                                <div className="sync-card">
+                                    <div className="sync-title">CANVAS SYSTEMS</div>
+                                    <div className="sync-value">5/5 ONLINE</div>
+                                </div>
+                            </div>
+                            <div className="sync-controls">
+                                <button 
+                                    className={`sync-btn primary ${syncStatus === 'syncing' ? 'disabled' : ''}`}
+                                    onClick={startSync}
+                                    disabled={syncStatus === 'syncing'}
+                                >
+                                    {syncStatus === 'syncing' ? 'SYNCING...' : 'START SYNC'}
+                                </button>
+                                <button className="sync-btn secondary">FORCE SYNC</button>
+                                <button className="sync-btn danger">ABORT</button>
+                            </div>
+                        </div>
+                    </div>
+                    <StatusFooter />
+                </div>
+            );
+        };
+        
+        const TopBar = () => (
+            <div className="top-bar">
+                <div className="logo-section">
+                    <div className="logo">TROCADERO</div>
+                    <div className="breadcrumb">
+                        <span><a href="index.html">CONTROL</a> / <a href="schedule-management.html">SCHEDULE</a> / SYNC</span>
+                    </div>
+                </div>
+                <div className="center-info">
+                    <div className="time-display">{new Date().toTimeString().split(' ')[0]}</div>
+                    <div className="system-info">SCHEDULE SYNC v2.1</div>
+                </div>
+                <div className="top-controls">
+                    <button className="emergency-btn">EMERGENCY STOP</button>
+                </div>
+            </div>
+        );
+        
+        const Sidebar = () => (
+            <div className="side-navigation">
+                <div className="nav-section">
+                    <div className="nav-title">MAIN SECTIONS</div>
+                    <div className="nav-item" onClick={() => window.location.href = 'index.html'}>
+                        <span className="nav-icon">🏠</span>
+                        <span className="nav-label">DASHBOARD</span>
+                    </div>
+                    <div className="nav-item" onClick={() => window.location.href = 'content-management.html'}>
+                        <span className="nav-icon">📁</span>
+                        <span className="nav-label">CONTENT</span>
+                    </div>
+                    <div className="nav-item" onClick={() => window.location.href = 'schedule-management.html'}>
+                        <span className="nav-icon">📅</span>
+                        <span className="nav-label">SCHEDULE</span>
+                    </div>
+                    <div className="nav-item" onClick={() => window.location.href = 'system-settings.html'}>
+                        <span className="nav-icon">⚙️</span>
+                        <span className="nav-label">SETTINGS</span>
+                    </div>
+                </div>
+            </div>
+        );
+        
+        const StatusFooter = () => (
+            <div className="status-footer">
+                <div className="footer-section">
+                    <span className="footer-label">SYNC STATUS:</span>
+                    <span className="footer-value">READY</span>
+                </div>
+                <div className="footer-section">
+                    <span className="footer-label">LAST SYNC:</span>
+                    <span className="footer-value">2 min ago</span>
+                </div>
+            </div>
+        );
+        
+        ReactDOM.render(<ScheduleSyncSystem />, document.getElementById('root'));
+    </script>
+</body>
+</html>

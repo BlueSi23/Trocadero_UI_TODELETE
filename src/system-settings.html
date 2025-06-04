@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Settings - Trocadero Control System</title>
+    <link rel="stylesheet" href="styles/main.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Roboto+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+</head>
+<body>
+    <div id="root"></div>
+    <canvas id="background-canvas"></canvas>
+    
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+        
+        // System Settings Component
+        const SystemSettingsSystem = () => {
+            const [currentView, setCurrentView] = useState('general');
+            const [settingsChanged, setSettingsChanged] = useState(false);
+            
+            return (
+                <div className="control-system">
+                    <TopBar />
+                    <div className="main-content">
+                        <SettingsSidebar currentView={currentView} setCurrentView={setCurrentView} />
+                        <div className="settings-main">
+                            {currentView === 'general' && <GeneralSettings />}
+                            {currentView === 'canvas' && <CanvasSettings />}
+                            {currentView === 'network' && <NetworkSettings />}
+                            {currentView === 'security' && <SecuritySettings />}
+                            {currentView === 'maintenance' && <MaintenanceSettings />}
+                            {currentView === 'backup' && <BackupSettings />}
+                        </div>
+                        <SystemStatusPanel />
+                    </div>
+                    <StatusFooter />
+                </div>
+            );
+        };
+        
+        // Top Bar Component
+        const TopBar = () => {
+            const [currentTime, setCurrentTime] = useState(new Date());
+            
+            useEffect(() => {
+                const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+                return () => clearInterval(timer);
+            }, []);
+            
+            return (
+                <div className="top-bar">
+                    <div className="logo-section">
+                        <div className="logo">TROCADERO</div>
+                        <div className="breadcrumb">
+                            <span><a href="index.html">CONTROL</a> / SYSTEM SETTINGS</span>
+                        </div>
+                    </div>
+                    
+                    <div className="center-info">
+                        <div className="time-display">
+                            {currentTime.toTimeString().split(' ')[0]}
+                        </div>
+                        <div className="system-info">SYSTEM SETTINGS v2.1</div>
+                    </div>
+                    
+                    <div className="top-controls">
+                        <div className="system-health">
+                            <span className="status-indicator online"></span>
+                            SYSTEM: HEALTHY
+                        </div>
+                        <button className="emergency-btn">FACTORY RESET</button>
+                    </div>
+                </div>
+            );
+        };
+        
+        // Settings Sidebar
+        const SettingsSidebar = ({ currentView, setCurrentView }) => {
+            const menuItems = [
+                { id: 'general', icon: '⚙️', label: 'GENERAL' },
+                { id: 'canvas', icon: '🖥️', label: 'CANVAS CONFIG' },
+                { id: 'network', icon: '🌐', label: 'NETWORK' },
+                { id: 'security', icon: '🔒', label: 'SECURITY' },
+                { id: 'maintenance', icon: '🔧', label: 'MAINTENANCE' },
+                { id: 'backup', icon: '💾', label: 'BACKUP' }
+            ];
+            
+            return (
+                <div className="side-navigation">
+                    <div className="nav-section">
+                        <div className="nav-title">SYSTEM SETTINGS</div>
+                        {menuItems.map(item => (
+                            <div 
+                                key={item.id}
+                                className={`nav-item ${currentView === item.id ? 'active' : ''}`}
+                                onClick={() => setCurrentView(item.id)}
+                            >
+                                <span className="nav-icon">{item.icon}</span>
+                                <span className="nav-label">{item.label}</span>
+                            </div>
+                        ))}
+                    </div>
+                    
+                    <div className="nav-section">
+                        <div className="nav-title">QUICK ACTIONS</div>
+                        <div className="nav-item">
+                            <span className="nav-icon">🔄</span>
+                            <span className="nav-label">RESTART SYSTEM</span>
+                        </div>
+                        <div className="nav-item">
+                            <span className="nav-icon">📊</span>
+                            <span className="nav-label">DIAGNOSTICS</span>
+                        </div>
+                        <div className="nav-item">
+                            <span className="nav-icon">📋</span>
+                            <span className="nav-label">EXPORT CONFIG</span>
+                        </div>
+                    </div>
+                    
+                    <div className="system-info-panel">
+                        <div className="info-title">SYSTEM INFO</div>
+                        <div className="info-item">
+                            <span className="info-label">VERSION:</span>
+                            <span className="info-value">v2.1.3</span>
+                        </div>
+                        <div className="info-item">
+                            <span className="info-label">UPTIME:</span>
+                            <span className="info-value">247:15:33</span>
+                        </div>
+                        <div className="info-item">
+                            <span className="info-label">CPU:</span>
+                            <span className="info-value">23%</span>
+                        </div>
+                        <div className="info-item">
+                            <span className="info-label">MEMORY:</span>
+                            <span className="info-value">4.2GB/16GB</span>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+        
+        // General Settings Component
+        const GeneralSettings = () => (
+            <div className="settings-section">
+                <div className="section-header">
+                    <h2>GENERAL SETTINGS</h2>
+                    <button className="save-settings-btn">SAVE CHANGES</button>
+                </div>
+                
+                <div className="settings-grid">
+                    <SettingCard title="SYSTEM NAME" type="text" value="Trocadero Control System" />
+                    <SettingCard title="TIMEZONE" type="select" value="Europe/London" options={['Europe/London', 'America/New_York', 'Asia/Tokyo']} />
+                    <SettingCard title="LANGUAGE" type="select" value="English" options={['English', 'French', 'Spanish']} />
+                    <SettingCard title="AUTO UPDATE" type="toggle" value={true} />
+                    <SettingCard title="DEBUG MODE" type="toggle" value={false} />
+                    <SettingCard title="LOGGING LEVEL" type="select" value="INFO" options={['DEBUG', 'INFO', 'WARN', 'ERROR']} />
+                </div>
+            </div>
+        );
+        
+        // Canvas Settings Component
+        const CanvasSettings = () => (
+            <div className="settings-section">
+                <div className="section-header">
+                    <h2>CANVAS CONFIGURATION</h2>
+                    <button className="calibrate-btn">CALIBRATE ALL</button>
+                </div>
+                
+                <div className="canvas-list">
+                    <CanvasConfigCard name="FACADE LIGHTING" type="LED Array" status="online" />
+                    <CanvasConfigCard name="LED CANOPY" type="Addressable LEDs" status="online" />
+                    <CanvasConfigCard name="INTERIOR STAIRS" type="Interactive LEDs" status="online" />
+                    <CanvasConfigCard name="VIDEO WALL" type="4K Display Array" status="maintenance" />
+                    <CanvasConfigCard name="MAIN DISPLAY" type="Ultra-wide Display" status="online" />
+                </div>
+            </div>
+        );
+        
+        // Network Settings Component
+        const NetworkSettings = () => (
+            <div className="settings-section">
+                <div className="section-header">
+                    <h2>NETWORK CONFIGURATION</h2>
+                    <button className="test-connection-btn">TEST CONNECTIONS</button>
+                </div>
+                
+                <div className="network-grid">
+                    <div className="network-card">
+                        <h3>PRIMARY NETWORK</h3>
+                        <div className="network-details">
+                            <div className="detail-item">
+                                <span className="detail-label">IP ADDRESS:</span>
+                                <span className="detail-value">192.168.1.100</span>
+                            </div>
+                            <div className="detail-item">
+                                <span className="detail-label">SUBNET:</span>
+                                <span className="detail-value">255.255.255.0</span>
+                            </div>
+                            <div className="detail-item">
+                                <span className="detail-label">GATEWAY:</span>
+                                <span className="detail-value">192.168.1.1</span>
+                            </div>
+                            <div className="connection-status online">
+                                <span className="status-indicator"></span>
+                                CONNECTED
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div className="network-card">
+                        <h3>BACKUP NETWORK</h3>
+                        <div className="network-details">
+                            <div className="detail-item">
+                                <span className="detail-label">IP ADDRESS:</span>
+                                <span className="detail-value">10.0.1.100</span>
+                            </div>
+                            <div className="detail-item">
+                                <span className="detail-label">SUBNET:</span>
+                                <span className="detail-value">255.255.0.0</span>
+                            </div>
+                            <div className="detail-item">
+                                <span className="detail-label">GATEWAY:</span>
+                                <span className="detail-value">10.0.1.1</span>
+                            </div>
+                            <div className="connection-status standby">
+                                <span className="status-indicator"></span>
+                                STANDBY
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+        
+        // Security Settings Component
+        const SecuritySettings = () => (
+            <div className="settings-section">
+                <div className="section-header">
+                    <h2>SECURITY SETTINGS</h2>
+                    <button className="security-audit-btn">RUN SECURITY AUDIT</button>
+                </div>
+                
+                <div className="security-grid">
+                    <div className="security-card">
+                        <h3>ACCESS CONTROL</h3>
+                        <SettingCard title="ADMIN PASSWORD" type="password" value="••••••••" />
+                        <SettingCard title="SESSION TIMEOUT" type="number" value="30" unit="minutes" />
+                        <SettingCard title="TWO-FACTOR AUTH" type="toggle" value={true} />
+                    </div>
+                    
+                    <div className="security-card">
+                        <h3>ENCRYPTION</h3>
+                        <SettingCard title="API ENCRYPTION" type="toggle" value={true} />
+                        <SettingCard title="LOG ENCRYPTION" type="toggle" value={false} />
+                        <SettingCard title="BACKUP ENCRYPTION" type="toggle" value={true} />
+                    </div>
+                    
+                    <div className="security-card">
+                        <h3>FIREWALL</h3>
+                        <div className="firewall-status online">
+                            <span className="status-indicator"></span>
+                            FIREWALL ACTIVE
+                        </div>
+                        <div className="firewall-rules">
+                            <div className="rule-item">Allow: Port 80 (HTTP)</div>
+                            <div className="rule-item">Allow: Port 443 (HTTPS)</div>
+                            <div className="rule-item">Block: All other ports</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+        
+        // Maintenance Settings Component
+        const MaintenanceSettings = () => (
+            <div className="settings-section">
+                <div className="section-header">
+                    <h2>MAINTENANCE SETTINGS</h2>
+                    <button className="maintenance-mode-btn">ENTER MAINTENANCE MODE</button>
+                </div>
+                
+                <div className="maintenance-grid">
+                    <div className="maintenance-card">
+                        <h3>SCHEDULED MAINTENANCE</h3>
+                        <div className="schedule-item">
+                            <span className="schedule-time">02:00 Daily</span>
+                            <span className="schedule-task">System Health Check</span>
+                            <span className="schedule-status enabled">ENABLED</span>
+                        </div>
+                        <div className="schedule-item">
+                            <span className="schedule-time">Weekly</span>
+                            <span className="schedule-task">Log Cleanup</span>
+                            <span className="schedule-status enabled">ENABLED</span>
+                        </div>
+                        <div className="schedule-item">
+                            <span className="schedule-time">Monthly</span>
+                            <span className="schedule-task">Full System Backup</span>
+                            <span className="schedule-status enabled">ENABLED</span>
+                        </div>
+                    </div>
+                    
+                    <div className="maintenance-card">
+                        <h3>SYSTEM DIAGNOSTICS</h3>
+                        <div className="diagnostic-item">
+                            <span className="diagnostic-test">Hardware Test</span>
+                            <span className="diagnostic-result passed">PASSED</span>
+                            <span className="diagnostic-time">2 hours ago</span>
+                        </div>
+                        <div className="diagnostic-item">
+                            <span className="diagnostic-test">Network Test</span>
+                            <span className="diagnostic-result passed">PASSED</span>
+                            <span className="diagnostic-time">1 hour ago</span>
+                        </div>
+                        <div className="diagnostic-item">
+                            <span className="diagnostic-test">Performance Test</span>
+                            <span className="diagnostic-result warning">WARNING</span>
+                            <span className="diagnostic-time">30 min ago</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+        
+        // Backup Settings Component
+        const BackupSettings = () => (
+            <div className="settings-section">
+                <div className="section-header">
+                    <h2>BACKUP & RECOVERY</h2>
+                    <button className="backup-now-btn">BACKUP NOW</button>
+                </div>
+                
+                <div className="backup-grid">
+                    <div className="backup-card">
+                        <h3>AUTOMATIC BACKUPS</h3>
+                        <SettingCard title="AUTO BACKUP" type="toggle" value={true} />
+                        <SettingCard title="BACKUP FREQUENCY" type="select" value="Daily" options={['Hourly', 'Daily', 'Weekly']} />
+                        <SettingCard title="RETENTION PERIOD" type="number" value="30" unit="days" />
+                        <SettingCard title="BACKUP LOCATION" type="text" value="/backup/trocadero/" />
+                    </div>
+                    
+                    <div className="backup-card">
+                        <h3>BACKUP HISTORY</h3>
+                        <div className="backup-list">
+                            <div className="backup-item">
+                                <span className="backup-date">2025-06-04 02:00</span>
+                                <span className="backup-size">2.3GB</span>
+                                <span className="backup-status success">SUCCESS</span>
+                            </div>
+                            <div className="backup-item">
+                                <span className="backup-date">2025-06-03 02:00</span>
+                                <span className="backup-size">2.2GB</span>
+                                <span className="backup-status success">SUCCESS</span>
+                            </div>
+                            <div className="backup-item">
+                                <span className="backup-date">2025-06-02 02:00</span>
+                                <span className="backup-size">2.1GB</span>
+                                <span className="backup-status success">SUCCESS</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div className="backup-card">
+                        <h3>RECOVERY OPTIONS</h3>
+                        <button className="recovery-btn">RESTORE FROM BACKUP</button>
+                        <button className="recovery-btn">FACTORY RESET</button>
+                        <button className="recovery-btn">EXPORT CONFIGURATION</button>
+                        <button className="recovery-btn">IMPORT CONFIGURATION</button>
+                    </div>
+                </div>
+            </div>
+        );
+        
+        // Setting Card Component
+        const SettingCard = ({ title, type, value, options, unit }) => {
+            const [currentValue, setCurrentValue] = useState(value);
+            
+            const renderInput = () => {
+                switch (type) {
+                    case 'text':
+                    case 'password':
+                    case 'number':
+                        return (
+                            <input 
+                                type={type} 
+                                value={currentValue} 
+                                onChange={(e) => setCurrentValue(e.target.value)}
+                                className="setting-input"
+                            />
+                        );
+                    case 'select':
+                        return (
+                            <select 
+                                value={currentValue} 
+                                onChange={(e) => setCurrentValue(e.target.value)}
+                                className="setting-select"
+                            >
+                                {options.map(option => (
+                                    <option key={option} value={option}>{option}</option>
+                                ))}
+                            </select>
+                        );
+                    case 'toggle':
+                        return (
+                            <label className="toggle-switch">
+                                <input 
+                                    type="checkbox" 
+                                    checked={currentValue} 
+                                    onChange={(e) => setCurrentValue(e.target.checked)}
+                                />
+                                <span className="toggle-slider"></span>
+                            </label>
+                        );
+                    default:
+                        return null;
+                }
+            };
+            
+            return (
+                <div className="setting-card">
+                    <div className="setting-label">{title}:</div>
+                    <div className="setting-control">
+                        {renderInput()}
+                        {unit && <span className="setting-unit">{unit}</span>}
+                    </div>
+                </div>
+            );
+        };
+        
+        // Canvas Config Card Component
+        const CanvasConfigCard = ({ name, type, status }) => (
+            <div className={`canvas-config-card ${status}`}>
+                <div className="canvas-info">
+                    <div className="canvas-name">{name}</div>
+                    <div className="canvas-type">{type}</div>
+                    <div className={`canvas-status ${status}`}>
+                        <span className="status-indicator"></span>
+                        {status.toUpperCase()}
+                    </div>
+                </div>
+                <div className="canvas-controls">
+                    <button className="canvas-btn">CONFIGURE</button>
+                    <button className="canvas-btn">CALIBRATE</button>
+                    <button className="canvas-btn">TEST</button>
+                </div>
+            </div>
+        );
+        
+        // System Status Panel
+        const SystemStatusPanel = () => (
+            <div className="system-status-panel">
+                <div className="panel-header">
+                    <h3>SYSTEM STATUS</h3>
+                    <div className="refresh-btn">🔄</div>
+                </div>
+                
+                <div className="status-grid">
+                    <div className="status-metric">
+                        <div className="metric-label">CPU USAGE</div>
+                        <div className="metric-value">23%</div>
+                        <div className="metric-bar">
+                            <div className="metric-fill" style={{width: '23%'}}></div>
+                        </div>
+                    </div>
+                    
+                    <div className="status-metric">
+                        <div className="metric-label">MEMORY</div>
+                        <div className="metric-value">26%</div>
+                        <div className="metric-bar">
+                            <div className="metric-fill" style={{width: '26%'}}></div>
+                        </div>
+                    </div>
+                    
+                    <div className="status-metric">
+                        <div className="metric-label">STORAGE</div>
+                        <div className="metric-value">45%</div>
+                        <div className="metric-bar">
+                            <div className="metric-fill" style={{width: '45%'}}></div>
+                        </div>
+                    </div>
+                    
+                    <div className="status-metric">
+                        <div className="metric-label">NETWORK</div>
+                        <div className="metric-value">12%</div>
+                        <div className="metric-bar">
+                            <div className="metric-fill" style={{width: '12%'}}></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div className="system-alerts">
+                    <div className="alert-header">SYSTEM ALERTS</div>
+                    <div className="alert-item warning">
+                        <span className="alert-icon">⚠️</span>
+                        <span className="alert-text">Video wall connection unstable</span>
+                    </div>
+                    <div className="alert-item info">
+                        <span className="alert-icon">ℹ️</span>
+                        <span className="alert-text">Scheduled maintenance in 6 hours</span>
+                    </div>
+                </div>
+            </div>
+        );
+        
+        // Status Footer
+        const StatusFooter = () => (
+            <div className="status-footer">
+                <div className="footer-section">
+                    <span className="footer-label">SYSTEM VERSION:</span>
+                    <span className="footer-value">v2.1.3</span>
+                </div>
+                <div className="footer-section">
+                    <span className="footer-label">UPTIME:</span>
+                    <span className="footer-value">247:15:33</span>
+                </div>
+                <div className="footer-section">
+                    <span className="footer-label">LAST BACKUP:</span>
+                    <span className="footer-value">2 hours ago</span>
+                </div>
+                <div className="footer-section">
+                    <span className="footer-label">CONFIG STATUS:</span>
+                    <span className="footer-value">SAVED</span>
+                </div>
+            </div>
+        );
+        
+        // Background Animation - Initialize after DOM is ready
+        window.addEventListener('DOMContentLoaded', () => {
+            const canvas = document.getElementById('background-canvas');
+            const ctx = canvas.getContext('2d');
+            
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            
+            const particles = [];
+            for (let i = 0; i < 35; i++) {
+                particles.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    vx: (Math.random() - 0.5) * 0.2,
+                    vy: (Math.random() - 0.5) * 0.2,
+                    size: Math.random() * 1.5
+                });
+            }
+            
+            const animate = () => {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = 'rgba(220, 20, 60, 0.05)';
+                
+                particles.forEach(particle => {
+                    particle.x += particle.vx;
+                    particle.y += particle.vy;
+                    
+                    if (particle.x < 0 || particle.x > canvas.width) particle.vx *= -1;
+                    if (particle.y < 0 || particle.y > canvas.height) particle.vy *= -1;
+                    
+                    ctx.beginPath();
+                    ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
+                    ctx.fill();
+                });
+                
+                requestAnimationFrame(animate);
+            };
+            
+            animate();
+        });
+        
+        // Render the app
+        ReactDOM.render(<SystemSettingsSystem />, document.getElementById('root'));
+    </script>
+</body>
+</html>

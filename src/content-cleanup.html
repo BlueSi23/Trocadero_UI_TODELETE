@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Content Cleanup - Trocadero Control System</title>
+    <link rel="stylesheet" href="styles/main.css">
+    <link rel="stylesheet" href="styles/content-management.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Roboto+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+</head>
+<body>
+    <div id="root"></div>
+    <canvas id="background-canvas"></canvas>
+    
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+        
+        // Content Cleanup System Component
+        const ContentCleanupSystem = () => {
+            const [selectedItems, setSelectedItems] = useState([]);
+            const [cleanupInProgress, setCleanupInProgress] = useState(false);
+            const [spaceReclaimed, setSpaceReclaimed] = useState(0);
+            
+            return (
+                <div className="control-system">
+                    <TopBar />
+                    <div className="main-content">
+                        <CleanupSidebar />
+                        <div className="cleanup-main">
+                            <CleanupDashboard 
+                                selectedItems={selectedItems}
+                                setSelectedItems={setSelectedItems}
+                                cleanupInProgress={cleanupInProgress}
+                                setCleanupInProgress={setCleanupInProgress}
+                                spaceReclaimed={spaceReclaimed}
+                                setSpaceReclaimed={setSpaceReclaimed}
+                            />
+                        </div>
+                        <CleanupSummaryPanel selectedItems={selectedItems} spaceReclaimed={spaceReclaimed} />
+                    </div>
+                    <StatusFooter />
+                </div>
+            );
+        };
+        
+        // Top Bar Component
+        const TopBar = () => {
+            const [currentTime, setCurrentTime] = useState(new Date());
+            
+            useEffect(() => {
+                const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+                return () => clearInterval(timer);
+            }, []);
+            
+            return (
+                <div className="top-bar">
+                    <div className="logo-section">
+                        <div className="logo">TROCADERO</div>
+                        <div className="breadcrumb">
+                            <span><a href="index.html">CONTROL</a> / <a href="content-management.html">CONTENT</a> / CLEANUP</span>
+                        </div>
+                    </div>
+                    
+                    <div className="center-info">
+                        <div className="time-display">
+                            {currentTime.toTimeString().split(' ')[0]}
+                        </div>
+                        <div className="system-info">CONTENT CLEANUP v2.1</div>
+                    </div>
+                    
+                    <div className="top-controls">
+                        <div className="storage-status">
+                            <span className="status-indicator warning"></span>
+                            STORAGE: 7.8TB / 10TB
+                        </div>
+                        <button className="emergency-btn">EMERGENCY PURGE</button>
+                    </div>
+                </div>
+            );
+        };
+        
+        // Cleanup Sidebar
+        const CleanupSidebar = () => (
+            <div className="side-navigation">
+                <div className="nav-section">
+                    <div className="nav-title">CLEANUP OPERATIONS</div>
+                    <div className="nav-item active">
+                        <span className="nav-icon">🗑️</span>
+                        <span className="nav-label">MANUAL CLEANUP</span>
+                    </div>
+                    <div className="nav-item">
+                        <span className="nav-icon">🤖</span>
+                        <span className="nav-label">AUTO CLEANUP</span>
+                    </div>
+                    <div className="nav-item">
+                        <span className="nav-icon">📊</span>
+                        <span className="nav-label">USAGE ANALYSIS</span>
+                    </div>
+                    <div className="nav-item">
+                        <span className="nav-icon">♻️</span>
+                        <span className="nav-label">RECYCLE BIN</span>
+                    </div>
+                </div>
+                
+                <div className="nav-section">
+                    <div className="nav-title">MAIN SECTIONS</div>
+                    <div className="nav-item" onClick={() => window.location.href = 'index.html'}>
+                        <span className="nav-icon">🏠</span>
+                        <span className="nav-label">DASHBOARD</span>
+                    </div>
+                    <div className="nav-item" onClick={() => window.location.href = 'content-management.html'}>
+                        <span className="nav-icon">📁</span>
+                        <span className="nav-label">CONTENT</span>
+                    </div>
+                    <div className="nav-item" onClick={() => window.location.href = 'schedule-management.html'}>
+                        <span className="nav-icon">📅</span>
+                        <span className="nav-label">SCHEDULE</span>
+                    </div>
+                </div>
+                
+                <div className="cleanup-rules">
+                    <div className="rules-title">CLEANUP RULES</div>
+                    <div className="rule-item">
+                        <span className="rule-condition">Older than 90 days</span>
+                        <span className="rule-action">Archive</span>
+                    </div>
+                    <div className="rule-item">
+                        <span className="rule-condition">Unused 30+ days</span>
+                        <span className="rule-action">Flag for review</span>
+                    </div>
+                    <div className="rule-item">
+                        <span className="rule-condition">Duplicate files</span>
+                        <span className="rule-action">Merge</span>
+                    </div>
+                </div>
+            </div>
+        );
+        
+        // Cleanup Dashboard Component
+        const CleanupDashboard = ({ selectedItems, setSelectedItems, cleanupInProgress, setCleanupInProgress, spaceReclaimed, setSpaceReclaimed }) => {
+            const [cleanupItems] = useState([
+                { id: 1, name: 'old_promotional_videos/', type: 'folder', size: '1.2 GB', lastUsed: '45 days ago', reason: 'Outdated content' },
+                { id: 2, name: 'temp_renders/', type: 'folder', size: '850 MB', lastUsed: '12 days ago', reason: 'Temporary files' },
+                { id: 3, name: 'duplicate_images/', type: 'folder', size: '320 MB', lastUsed: '8 days ago', reason: 'Duplicate files' },
+                { id: 4, name: 'failed_uploads/', type: 'folder', size: '150 MB', lastUsed: '60 days ago', reason: 'Failed uploads' },
+                { id: 5, name: 'cache_files/', type: 'folder', size: '2.1 GB', lastUsed: '1 day ago', reason: 'System cache' },
+                { id: 6, name: 'backup_archive.zip', type: 'file', size: '4.5 GB', lastUsed: '90 days ago', reason: 'Old backup' }
+            ]);
+            
+            const startCleanup = () => {
+                setCleanupInProgress(true);
+                setSpaceReclaimed(0);
+                
+                let totalSize = selectedItems.reduce((acc, id) => {
+                    const item = cleanupItems.find(i => i.id === id);
+                    return acc + parseFloat(item.size.replace(/[^\d.]/g, ''));
+                }, 0);
+                
+                const interval = setInterval(() => {
+                    setSpaceReclaimed(prev => {
+                        if (prev >= totalSize) {
+                            clearInterval(interval);
+                            setCleanupInProgress(false);
+                            return totalSize;
+                        }
+                        return prev + totalSize * 0.1;
+                    });
+                }, 300);
+            };
+            
+            const toggleItem = (id) => {
+                setSelectedItems(prev => 
+                    prev.includes(id) 
+                        ? prev.filter(item => item !== id)
+                        : [...prev, id]
+                );
+            };
+            
+            return (
+                <div className="cleanup-dashboard">
+                    <div className="cleanup-header">
+                        <h2>CONTENT CLEANUP</h2>
+                        <div className="cleanup-controls">
+                            <button 
+                                className={`cleanup-btn primary ${selectedItems.length === 0 || cleanupInProgress ? 'disabled' : ''}`}
+                                onClick={startCleanup}
+                                disabled={selectedItems.length === 0 || cleanupInProgress}
+                            >
+                                {cleanupInProgress ? 'CLEANING...' : `CLEANUP ${selectedItems.length} ITEMS`}
+                            </button>
+                            <button 
+                                className="cleanup-btn secondary"
+                                onClick={() => setSelectedItems(cleanupItems.map(item => item.id))}
+                            >
+                                SELECT ALL
+                            </button>
+                            <button 
+                                className="cleanup-btn secondary"
+                                onClick={() => setSelectedItems([])}
+                            >
+                                CLEAR SELECTION
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div className="cleanup-stats">
+                        <div className="stat-card">
+                            <div className="stat-title">SELECTED ITEMS</div>
+                            <div className="stat-value">{selectedItems.length}</div>
+                            <div className="stat-subtitle">of {cleanupItems.length} total</div>
+                        </div>
+                        
+                        <div className="stat-card">
+                            <div className="stat-title">SPACE TO RECLAIM</div>
+                            <div className="stat-value">
+                                {selectedItems.reduce((acc, id) => {
+                                    const item = cleanupItems.find(i => i.id === id);
+                                    return acc + parseFloat(item.size.replace(/[^\d.]/g, ''));
+                                }, 0).toFixed(1)} GB
+                            </div>
+                            <div className="stat-subtitle">potential savings</div>
+                        </div>
+                        
+                        <div className="stat-card">
+                            <div className="stat-title">SPACE RECLAIMED</div>
+                            <div className="stat-value">{spaceReclaimed.toFixed(1)} GB</div>
+                            <div className="stat-subtitle">this session</div>
+                        </div>
+                        
+                        <div className="stat-card">
+                            <div className="stat-title">CLEANUP STATUS</div>
+                            <div className={`stat-value ${cleanupInProgress ? 'warning' : 'success'}`}>
+                                {cleanupInProgress ? 'IN PROGRESS' : 'READY'}
+                            </div>
+                            <div className="stat-subtitle">
+                                {cleanupInProgress && <div className="cleanup-spinner"></div>}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div className="cleanup-items">
+                        <div className="items-header">
+                            <h3>ITEMS FOR CLEANUP</h3>
+                            <div className="filter-controls">
+                                <button className="filter-btn active">ALL</button>
+                                <button className="filter-btn">FOLDERS</button>
+                                <button className="filter-btn">FILES</button>
+                                <button className="filter-btn">LARGE</button>
+                            </div>
+                        </div>
+                        
+                        <div className="items-list">
+                            {cleanupItems.map(item => (
+                                <CleanupItem 
+                                    key={item.id}
+                                    item={item}
+                                    isSelected={selectedItems.includes(item.id)}
+                                    onToggle={() => toggleItem(item.id)}
+                                />
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+        
+        // Cleanup Item Component
+        const CleanupItem = ({ item, isSelected, onToggle }) => (
+            <div className={`cleanup-item ${isSelected ? 'selected' : ''}`}>
+                <div className="item-checkbox">
+                    <input 
+                        type="checkbox" 
+                        checked={isSelected} 
+                        onChange={onToggle}
+                        className="item-check"
+                    />
+                </div>
+                
+                <div className="item-info">
+                    <div className="item-header">
+                        <span className="item-name">{item.name}</span>
+                        <span className={`item-type ${item.type}`}>
+                            {item.type === 'folder' ? '📁' : '📄'}
+                        </span>
+                    </div>
+                    <div className="item-details">
+                        <span className="item-size">{item.size}</span>
+                        <span className="item-separator">•</span>
+                        <span className="item-usage">Last used: {item.lastUsed}</span>
+                        <span className="item-separator">•</span>
+                        <span className="item-reason">{item.reason}</span>
+                    </div>
+                </div>
+                
+                <div className="item-actions">
+                    <button className="action-btn view">👁️</button>
+                    <button className="action-btn info">ℹ️</button>
+                    <button className="action-btn delete">🗑️</button>
+                </div>
+            </div>
+        );
+        
+        // Cleanup Summary Panel
+        const CleanupSummaryPanel = ({ selectedItems, spaceReclaimed }) => (
+            <div className="cleanup-summary-panel">
+                <div className="panel-header">
+                    <h3>CLEANUP SUMMARY</h3>
+                    <div className="panel-controls">
+                        <button className="panel-btn">EXPORT REPORT</button>
+                        <button className="panel-btn">SCHEDULE</button>
+                    </div>
+                </div>
+                
+                <div className="panel-content">
+                    <div className="summary-stats">
+                        <div className="summary-stat">
+                            <span className="stat-label">ITEMS SELECTED:</span>
+                            <span className="stat-value">{selectedItems.length}</span>
+                        </div>
+                        <div className="summary-stat">
+                            <span className="stat-label">SPACE RECLAIMED:</span>
+                            <span className="stat-value">{spaceReclaimed.toFixed(1)} GB</span>
+                        </div>
+                        <div className="summary-stat">
+                            <span className="stat-label">STORAGE FREED:</span>
+                            <span className="stat-value">{((spaceReclaimed / 10000) * 100).toFixed(1)}%</span>
+                        </div>
+                    </div>
+                    
+                    <div className="cleanup-recommendations">
+                        <div className="recommendations-header">RECOMMENDATIONS</div>
+                        <div className="recommendation-item">
+                            <span className="recommendation-icon">💡</span>
+                            <span className="recommendation-text">Enable auto-cleanup for cache files</span>
+                        </div>
+                        <div className="recommendation-item">
+                            <span className="recommendation-icon">⚠️</span>
+                            <span className="recommendation-text">Review old backup retention policy</span>
+                        </div>
+                        <div className="recommendation-item">
+                            <span className="recommendation-icon">📊</span>
+                            <span className="recommendation-text">Set up duplicate file monitoring</span>
+                        </div>
+                    </div>
+                    
+                    <div className="next-cleanup">
+                        <div className="next-header">NEXT SCHEDULED CLEANUP</div>
+                        <div className="next-date">Sunday, 3:00 AM</div>
+                        <div className="next-action">Automatic cache cleanup</div>
+                    </div>
+                </div>
+            </div>
+        );
+        
+        // Status Footer
+        const StatusFooter = () => (
+            <div className="status-footer">
+                <div className="footer-section">
+                    <span className="footer-label">STORAGE USED:</span>
+                    <span className="footer-value">7.8TB / 10TB</span>
+                </div>
+                <div className="footer-section">
+                    <span className="footer-label">CLEANUP STATUS:</span>
+                    <span className="footer-value">READY</span>
+                </div>
+                <div className="footer-section">
+                    <span className="footer-label">LAST CLEANUP:</span>
+                    <span className="footer-value">2 days ago</span>
+                </div>
+                <div className="footer-section">
+                    <span className="footer-label">RECLAIMED TODAY:</span>
+                    <span className="footer-value">0 GB</span>
+                </div>
+            </div>
+        );
+        
+        // Background Animation - Initialize after DOM is ready
+        window.addEventListener('DOMContentLoaded', () => {
+            const canvas = document.getElementById('background-canvas');
+            const ctx = canvas.getContext('2d');
+            
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            
+            const particles = [];
+            for (let i = 0; i < 20; i++) {
+                particles.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    vx: (Math.random() - 0.5) * 0.3,
+                    vy: (Math.random() - 0.5) * 0.3,
+                    size: Math.random() * 1.8
+                });
+            }
+            
+            const animate = () => {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = 'rgba(220, 20, 60, 0.06)';
+                
+                particles.forEach(particle => {
+                    particle.x += particle.vx;
+                    particle.y += particle.vy;
+                    
+                    if (particle.x < 0 || particle.x > canvas.width) particle.vx *= -1;
+                    if (particle.y < 0 || particle.y > canvas.height) particle.vy *= -1;
+                    
+                    ctx.beginPath();
+                    ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
+                    ctx.fill();
+                });
+                
+                requestAnimationFrame(animate);
+            };
+            
+            animate();
+        });
+        
+        // Render the app
+        ReactDOM.render(<ContentCleanupSystem />, document.getElementById('root'));
+    </script>
+</body>
+</html>

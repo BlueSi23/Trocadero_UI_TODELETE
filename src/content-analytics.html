@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Content Analytics - Trocadero Control System</title>
+    <link rel="stylesheet" href="styles/main.css">
+    <link rel="stylesheet" href="styles/content-management.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Roboto+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+</head>
+<body>
+    <div id="root"></div>
+    <canvas id="background-canvas"></canvas>
+    
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+        
+        const ContentAnalyticsSystem = () => (
+            <div className="control-system">
+                <TopBar />
+                <div className="main-content">
+                    <Sidebar />
+                    <div className="analytics-main">
+                        <h2>CONTENT ANALYTICS DASHBOARD</h2>
+                        <div className="analytics-grid">
+                            <MetricCard title="TOTAL CONTENT" value="247 files" change="+12" />
+                            <MetricCard title="STORAGE USAGE" value="2.3 TB" change="+0.8%" />
+                            <MetricCard title="MOST VIEWED" value="facade_celebration.mp4" change="1,247 views" />
+                            <MetricCard title="UPLOAD RATE" value="15 files/day" change="+3" />
+                        </div>
+                        <div className="chart-placeholder">
+                            <h3>CONTENT USAGE TRENDS</h3>
+                            <div style={{height: '300px', background: 'rgba(220, 20, 60, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
+                                📊 Analytics Chart Placeholder
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <StatusFooter />
+            </div>
+        );
+        
+        const TopBar = () => (
+            <div className="top-bar">
+                <div className="logo-section">
+                    <div className="logo">TROCADERO</div>
+                    <div className="breadcrumb">
+                        <span><a href="index.html">CONTROL</a> / <a href="content-management.html">CONTENT</a> / ANALYTICS</span>
+                    </div>
+                </div>
+                <div className="center-info">
+                    <div className="time-display">{new Date().toTimeString().split(' ')[0]}</div>
+                    <div className="system-info">CONTENT ANALYTICS v2.1</div>
+                </div>
+                <div className="top-controls">
+                    <button className="emergency-btn">EXPORT REPORT</button>
+                </div>
+            </div>
+        );
+        
+        const Sidebar = () => (
+            <div className="side-navigation">
+                <div className="nav-section">
+                    <div className="nav-title">MAIN SECTIONS</div>
+                    <div className="nav-item" onClick={() => window.location.href = 'index.html'}>
+                        <span className="nav-icon">🏠</span>
+                        <span className="nav-label">DASHBOARD</span>
+                    </div>
+                    <div className="nav-item" onClick={() => window.location.href = 'content-management.html'}>
+                        <span className="nav-icon">📁</span>
+                        <span className="nav-label">CONTENT</span>
+                    </div>
+                    <div className="nav-item" onClick={() => window.location.href = 'schedule-management.html'}>
+                        <span className="nav-icon">📅</span>
+                        <span className="nav-label">SCHEDULE</span>
+                    </div>
+                </div>
+            </div>
+        );
+        
+        const MetricCard = ({ title, value, change }) => (
+            <div className="metric-card">
+                <div className="metric-title">{title}</div>
+                <div className="metric-value">{value}</div>
+                <div className="metric-change">{change}</div>
+            </div>
+        );
+        
+        const StatusFooter = () => (
+            <div className="status-footer">
+                <div className="footer-section">
+                    <span className="footer-label">ANALYTICS STATUS:</span>
+                    <span className="footer-value">ACTIVE</span>
+                </div>
+                <div className="footer-section">
+                    <span className="footer-label">LAST UPDATE:</span>
+                    <span className="footer-value">5 min ago</span>
+                </div>
+            </div>
+        );
+        
+        ReactDOM.render(<ContentAnalyticsSystem />, document.getElementById('root'));
+    </script>
+</body>
+</html>

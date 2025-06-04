@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Emergency Clear - Trocadero Control System</title>
+    <link rel="stylesheet" href="styles/main.css">
+    <link rel="stylesheet" href="styles/schedule-management.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Roboto+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+</head>
+<body>
+    <div id="root"></div>
+    <canvas id="background-canvas"></canvas>
+    
+    <script type="text/babel">
+        const { useState } = React;
+        
+        const EmergencyClearSystem = () => {
+            const [confirmCode, setConfirmCode] = useState('');
+            const [clearStatus, setClearStatus] = useState('ready');
+            
+            const executeEmergencyClear = () => {
+                if (confirmCode === 'EMERGENCY') {
+                    setClearStatus('clearing');
+                    setTimeout(() => setClearStatus('complete'), 2000);
+                } else {
+                    alert('Invalid confirmation code');
+                }
+            };
+            
+            return (
+                <div className="control-system">
+                    <TopBar />
+                    <div className="main-content">
+                        <Sidebar />
+                        <div className="emergency-main">
+                            <div className="emergency-warning">
+                                <h2>⚠️ EMERGENCY SCHEDULE CLEAR</h2>
+                                <p>This action will immediately clear all scheduled events and stop all canvas operations.</p>
+                                <div className="warning-box">
+                                    <strong>WARNING:</strong> This action cannot be undone and will affect all 5 canvas systems immediately.
+                                </div>
+                            </div>
+                            
+                            <div className="emergency-form">
+                                <div className="form-group">
+                                    <label>Confirmation Code:</label>
+                                    <input 
+                                        type="text" 
+                                        value={confirmCode}
+                                        onChange={(e) => setConfirmCode(e.target.value)}
+                                        placeholder="Type 'EMERGENCY' to confirm"
+                                        className="emergency-input"
+                                    />
+                                </div>
+                                
+                                <div className="emergency-actions">
+                                    <button 
+                                        className={`emergency-btn danger ${confirmCode !== 'EMERGENCY' || clearStatus === 'clearing' ? 'disabled' : ''}`}
+                                        onClick={executeEmergencyClear}
+                                        disabled={confirmCode !== 'EMERGENCY' || clearStatus === 'clearing'}
+                                    >
+                                        {clearStatus === 'clearing' ? 'CLEARING...' : 'EXECUTE EMERGENCY CLEAR'}
+                                    </button>
+                                    <button 
+                                        className="emergency-btn secondary"
+                                        onClick={() => window.location.href = 'schedule-management.html'}
+                                    >
+                                        CANCEL
+                                    </button>
+                                </div>
+                                
+                                {clearStatus === 'complete' && (
+                                    <div className="clear-success">
+                                        ✅ Emergency clear completed. All schedules have been cleared.
+                                    </div>
+                                )}
+                            </div>
+                            
+                            <div className="affected-systems">
+                                <h3>AFFECTED SYSTEMS</h3>
+                                <div className="systems-list">
+                                    <div className="system-item">🏢 Facade Lighting</div>
+                                    <div className="system-item">🔆 LED Canopy</div>
+                                    <div className="system-item">📶 Interior Stairs</div>
+                                    <div className="system-item">📺 Video Wall</div>
+                                    <div className="system-item">🖥️ Main Display</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <StatusFooter />
+                </div>
+            );
+        };
+        
+        const TopBar = () => (
+            <div className="top-bar">
+                <div className="logo-section">
+                    <div className="logo">TROCADERO</div>
+                    <div className="breadcrumb">
+                        <span><a href="index.html">CONTROL</a> / <a href="schedule-management.html">SCHEDULE</a> / EMERGENCY CLEAR</span>
+                    </div>
+                </div>
+                <div className="center-info">
+                    <div className="time-display">{new Date().toTimeString().split(' ')[0]}</div>
+                    <div className="system-info">EMERGENCY CONTROL v2.1</div>
+                </div>
+                <div className="top-controls">
+                    <div className="emergency-status">
+                        <span className="status-indicator warning"></span>
+                        EMERGENCY MODE
+                    </div>
+                </div>
+            </div>
+        );
+        
+        const Sidebar = () => (
+            <div className="side-navigation">
+                <div className="nav-section">
+                    <div className="nav-title">MAIN SECTIONS</div>
+                    <div className="nav-item" onClick={() => window.location.href = 'index.html'}>
+                        <span className="nav-icon">🏠</span>
+                        <span className="nav-label">DASHBOARD</span>
+                    </div>
+                    <div className="nav-item" onClick={() => window.location.href = 'content-management.html'}>
+                        <span className="nav-icon">📁</span>
+                        <span className="nav-label">CONTENT</span>
+                    </div>
+                    <div className="nav-item" onClick={() => window.location.href = 'schedule-management.html'}>
+                        <span className="nav-icon">📅</span>
+                        <span className="nav-label">SCHEDULE</span>
+                    </div>
+                    <div className="nav-item" onClick={() => window.location.href = 'system-settings.html'}>
+                        <span className="nav-icon">⚙️</span>
+                        <span className="nav-label">SETTINGS</span>
+                    </div>
+                </div>
+                
+                <div className="emergency-info">
+                    <div className="info-title">⚠️ CAUTION</div>
+                    <div className="info-text">
+                        Emergency clear will immediately stop all operations and clear all scheduled events.
+                    </div>
+                    <div className="info-text">
+                        Use only in critical situations.
+                    </div>
+                </div>
+            </div>
+        );
+        
+        const StatusFooter = () => (
+            <div className="status-footer">
+                <div className="footer-section">
+                    <span className="footer-label">EMERGENCY MODE:</span>
+                    <span className="footer-value">ACTIVE</span>
+                </div>
+                <div className="footer-section">
+                    <span className="footer-label">SYSTEMS STATUS:</span>
+                    <span className="footer-value">RUNNING</span>
+                </div>
+            </div>
+        );
+        
+        ReactDOM.render(<EmergencyClearSystem />, document.getElementById('root'));
+    </script>
+</body>
+</html>
