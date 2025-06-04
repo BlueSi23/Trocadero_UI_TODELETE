@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trocadero Control System</title>
+    <link rel="stylesheet" href="styles/main.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Roboto+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+</head>
+<body>
+    <div id="root"></div>
+    
+    <!-- Canvas for background animations -->
+    <canvas id="background-canvas"></canvas>
+    
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+        
+        // Main Dashboard Component
+        const TrocaderoControlSystem = () => {
+            const [activeCanvas, setActiveCanvas] = useState('facade');
+            const [systemStatus, setSystemStatus] = useState('ONLINE');
+            const [currentTime, setCurrentTime] = useState(new Date());
+            
+            useEffect(() => {
+                const timer = setInterval(() => {
+                    setCurrentTime(new Date());
+                }, 1000);
+                return () => clearInterval(timer);
+            }, []);
+            
+            return (
+                <div className="control-system">
+                    <TopBar currentTime={currentTime} systemStatus={systemStatus} />
+                    <div className="main-content">
+                        <SideNavigation activeCanvas={activeCanvas} setActiveCanvas={setActiveCanvas} />
+                        <div className="dashboard-area">
+                            <SystemOverview />
+                            <CanvasControlGrid activeCanvas={activeCanvas} />
+                        </div>
+                        <RightPanel />
+                    </div>
+                    <StatusFooter />
+                </div>
+            );
+        };
+        
+        // Top Navigation Bar
+        const TopBar = ({ currentTime, systemStatus }) => (
+            <div className="top-bar">
+                <div className="logo-section">
+                    <div className="logo">TROCADERO</div>
+                    <div className="system-status">
+                        <span className={`status-indicator ${systemStatus.toLowerCase()}`}></span>
+                        {systemStatus}
+                    </div>
+                </div>
+                
+                <div className="center-info">
+                    <div className="time-display">
+                        {currentTime.toTimeString().split(' ')[0]}
+                    </div>
+                    <div className="system-info">CONTROL INTERFACE v2.1</div>
+                </div>
+                
+                <div className="top-controls">
+                    <button className="emergency-btn">EMERGENCY OVERRIDE</button>
+                    <div className="user-info">
+                        <span>ADMIN USER</span>
+                        <div className="user-avatar"></div>
+                    </div>
+                </div>
+            </div>
+        );
+        
+        // Side Navigation
+        const SideNavigation = ({ activeCanvas, setActiveCanvas }) => {
+            const canvases = [
+                { id: 'facade', icon: '🏢', label: 'FACADE' },
+                { id: 'canopy', icon: '🔆', label: 'CANOPY' },
+                { id: 'stairs', icon: '📶', label: 'STAIRS' },
+                { id: 'video', icon: '📺', label: 'VIDEO WALL' },
+                { id: 'main', icon: '🖥️', label: 'MAIN DISPLAY' }
+            ];
+            
+            return (
+                <div className="side-navigation">
+                    <div className="nav-section">
+                        <div className="nav-title">CANVAS SYSTEMS</div>
+                        {canvases.map(canvas => (
+                            <div 
+                                key={canvas.id}
+                                className={`nav-item ${activeCanvas === canvas.id ? 'active' : ''}`}
+                                onClick={() => setActiveCanvas(canvas.id)}
+                            >
+                                <span className="nav-icon">{canvas.icon}</span>
+                                <span className="nav-label">{canvas.label}</span>
+                                <div className="status-dot online"></div>
+                            </div>
+                        ))}
+                    </div>
+                    
+                    <div className="nav-section">
+                        <div className="nav-title">CONTROLS</div>
+                        <div className="nav-item">
+                            <span className="nav-icon">📅</span>
+                            <span className="nav-label">SCHEDULE</span>
+                        </div>
+                        <div className="nav-item">
+                            <span className="nav-icon">📁</span>
+                            <span className="nav-label">CONTENT</span>
+                        </div>
+                        <div className="nav-item">
+                            <span className="nav-icon">⚙️</span>
+                            <span className="nav-label">SYSTEM</span>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+        
+        // System Overview Component
+        const SystemOverview = () => (
+            <div className="system-overview">
+                <div className="overview-header">
+                    <h2>SYSTEM STATUS</h2>
+                    <div className="sync-indicator">
+                        <span className="sync-dot"></span>
+                        SYNCHRONIZED
+                    </div>
+                </div>
+                
+                <div className="status-grid">
+                    <StatusCard title="FACADE LIGHTING" status="ONLINE" value="85% BRIGHT" />
+                    <StatusCard title="LED CANOPY" status="ONLINE" value="PATTERN #3" />
+                    <StatusCard title="INTERIOR STAIRS" status="INTERACTIVE" value="3 ACTIVE ZONES" />
+                    <StatusCard title="VIDEO WALL" status="ONLINE" value="WAYFINDING" />
+                    <StatusCard title="MAIN DISPLAY" status="ONLINE" value="4 LAYERS" />
+                </div>
+            </div>
+        );
+        
+        // Status Card Component
+        const StatusCard = ({ title, status, value }) => (
+            <div className="status-card">
+                <div className="card-header">
+                    <div className="card-title">{title}</div>
+                    <div className={`card-status ${status.toLowerCase()}`}>
+                        <span className="status-indicator"></span>
+                        {status}
+                    </div>
+                </div>
+                <div className="card-value">{value}</div>
+                <div className="card-controls">
+                    <button className="control-btn">CONTROL</button>
+                    <button className="control-btn">SCHEDULE</button>
+                </div>
+            </div>
+        );
+        
+        // Canvas Control Grid
+        const CanvasControlGrid = ({ activeCanvas }) => (
+            <div className="canvas-control-grid">
+                <CanvasControlPanel canvasType={activeCanvas} />
+                <RealTimeMonitor />
+            </div>
+        );
+        
+        // Canvas Control Panel
+        const CanvasControlPanel = ({ canvasType }) => {
+            const [brightness, setBrightness] = useState(85);
+            const [color, setColor] = useState('#DC143C');
+            const [pattern, setPattern] = useState('celebration');
+            
+            return (
+                <div className="canvas-control-panel">
+                    <div className="panel-header">
+                        <h3>{canvasType.toUpperCase()} CONTROL</h3>
+                        <div className="connection-status">
+                            <span className="connection-dot online"></span>
+                            CONNECTED
+                        </div>
+                    </div>
+                    
+                    <div className="control-section">
+                        <div className="control-group">
+                            <label>BRIGHTNESS</label>
+                            <div className="slider-container">
+                                <input 
+                                    type="range" 
+                                    min="0" 
+                                    max="100" 
+                                    value={brightness}
+                                    onChange={(e) => setBrightness(e.target.value)}
+                                    className="brightness-slider"
+                                />
+                                <span className="slider-value">{brightness}%</span>
+                            </div>
+                        </div>
+                        
+                        <div className="control-group">
+                            <label>COLOR</label>
+                            <div className="color-controls">
+                                <input 
+                                    type="color" 
+                                    value={color}
+                                    onChange={(e) => setColor(e.target.value)}
+                                    className="color-picker"
+                                />
+                                <div className="color-presets">
+                                    <div className="preset-color red" onClick={() => setColor('#DC143C')}></div>
+                                    <div className="preset-color white" onClick={() => setColor('#FFFFFF')}></div>
+                                    <div className="preset-color blue" onClick={() => setColor('#00BFFF')}></div>
+                                    <div className="preset-color green" onClick={() => setColor('#00FF7F')}></div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div className="control-group">
+                            <label>PATTERN</label>
+                            <select 
+                                value={pattern} 
+                                onChange={(e) => setPattern(e.target.value)}
+                                className="pattern-select"
+                            >
+                                <option value="static">STATIC</option>
+                                <option value="fade">FADE</option>
+                                <option value="pulse">PULSE</option>
+                                <option value="celebration">CELEBRATION</option>
+                                <option value="seasonal">SEASONAL</option>
+                            </select>
+                        </div>
+                        
+                        <div className="action-buttons">
+                            <button className="action-btn primary">APPLY CHANGES</button>
+                            <button className="action-btn secondary">PREVIEW</button>
+                            <button className="action-btn danger">EMERGENCY STOP</button>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+        
+        // Real-time Monitor
+        const RealTimeMonitor = () => {
+            const canvasRef = useRef(null);
+            
+            useEffect(() => {
+                const canvas = canvasRef.current;
+                const ctx = canvas.getContext('2d');
+                
+                const drawWaveform = () => {
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    ctx.strokeStyle = '#DC143C';
+                    ctx.lineWidth = 2;
+                    
+                    ctx.beginPath();
+                    for (let x = 0; x < canvas.width; x++) {
+                        const y = canvas.height / 2 + Math.sin((x + Date.now() * 0.01) * 0.1) * 30;
+                        if (x === 0) ctx.moveTo(x, y);
+                        else ctx.lineTo(x, y);
+                    }
+                    ctx.stroke();
+                };
+                
+                const interval = setInterval(drawWaveform, 50);
+                return () => clearInterval(interval);
+            }, []);
+            
+            return (
+                <div className="realtime-monitor">
+                    <div className="monitor-header">
+                        <h3>REAL-TIME MONITOR</h3>
+                        <div className="monitor-controls">
+                            <button className="monitor-btn active">LIVE</button>
+                            <button className="monitor-btn">PAUSE</button>
+                        </div>
+                    </div>
+                    
+                    <div className="monitor-content">
+                        <canvas ref={canvasRef} width="400" height="120" className="waveform-canvas"></canvas>
+                        
+                        <div className="monitor-stats">
+                            <div className="stat-item">
+                                <span className="stat-label">RESPONSE TIME</span>
+                                <span className="stat-value">247ms</span>
+                            </div>
+                            <div className="stat-item">
+                                <span className="stat-label">THROUGHPUT</span>
+                                <span className="stat-value">1.2k/s</span>
+                            </div>
+                            <div className="stat-item">
+                                <span className="stat-label">ERRORS</span>
+                                <span className="stat-value">0</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+        
+        // Right Panel
+        const RightPanel = () => (
+            <div className="right-panel">
+                <div className="panel-section">
+                    <h3>ACTIVE SCHEDULES</h3>
+                    <div className="schedule-list">
+                        <div className="schedule-item">
+                            <div className="schedule-time">18:00</div>
+                            <div className="schedule-name">Evening Show</div>
+                            <div className="schedule-canvas">Facade + Canopy</div>
+                        </div>
+                        <div className="schedule-item">
+                            <div className="schedule-time">20:30</div>
+                            <div className="schedule-name">Interactive Mode</div>
+                            <div className="schedule-canvas">Stairs</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div className="panel-section">
+                    <h3>SYSTEM ALERTS</h3>
+                    <div className="alert-list">
+                        <div className="alert-item info">
+                            <span className="alert-icon">ℹ️</span>
+                            <span className="alert-text">Canopy calibration complete</span>
+                        </div>
+                        <div className="alert-item warning">
+                            <span className="alert-icon">⚠️</span>
+                            <span className="alert-text">Video wall connection unstable</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div className="panel-section">
+                    <h3>RECENT ACTIVITY</h3>
+                    <div className="activity-list">
+                        <div className="activity-item">
+                            <span className="activity-time">11:45</span>
+                            <span className="activity-text">Brightness adjusted on Facade</span>
+                        </div>
+                        <div className="activity-item">
+                            <span className="activity-time">11:30</span>
+                            <span className="activity-text">Content uploaded: promo_video.mp4</span>
+                        </div>
+                        <div className="activity-item">
+                            <span className="activity-time">11:20</span>
+                            <span className="activity-text">Emergency test completed</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+        
+        // Status Footer
+        const StatusFooter = () => (
+            <div className="status-footer">
+                <div className="footer-section">
+                    <span className="footer-label">SYSTEM HEALTH:</span>
+                    <span className="footer-value">98.7%</span>
+                </div>
+                <div className="footer-section">
+                    <span className="footer-label">CONNECTED USERS:</span>
+                    <span className="footer-value">3</span>
+                </div>
+                <div className="footer-section">
+                    <span className="footer-label">LAST UPDATE:</span>
+                    <span className="footer-value">2 sec ago</span>
+                </div>
+                <div className="footer-section">
+                    <span className="footer-label">UPTIME:</span>
+                    <span className="footer-value">247:15:33</span>
+                </div>
+            </div>
+        );
+        
+        // Background Animation - Initialize after DOM is ready
+        window.addEventListener('DOMContentLoaded', () => {
+            const canvas = document.getElementById('background-canvas');
+            const ctx = canvas.getContext('2d');
+            
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            
+            const particles = [];
+            for (let i = 0; i < 50; i++) {
+                particles.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    vx: (Math.random() - 0.5) * 0.5,
+                    vy: (Math.random() - 0.5) * 0.5,
+                    size: Math.random() * 2
+                });
+            }
+            
+            const animate = () => {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = 'rgba(220, 20, 60, 0.1)';
+                
+                particles.forEach(particle => {
+                    particle.x += particle.vx;
+                    particle.y += particle.vy;
+                    
+                    if (particle.x < 0 || particle.x > canvas.width) particle.vx *= -1;
+                    if (particle.y < 0 || particle.y > canvas.height) particle.vy *= -1;
+                    
+                    ctx.beginPath();
+                    ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
+                    ctx.fill();
+                });
+                
+                requestAnimationFrame(animate);
+            };
+            
+            animate();
+        });
+        
+        // Render the app
+        ReactDOM.render(<TrocaderoControlSystem />, document.getElementById('root'));
+    </script>
+</body>
+</html>

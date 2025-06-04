@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Content Management - Trocadero Control System</title>
+    <link rel="stylesheet" href="styles/main.css">
+    <link rel="stylesheet" href="styles/content-management.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Roboto+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+</head>
+<body>
+    <div id="root"></div>
+    <canvas id="background-canvas"></canvas>
+    
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+        
+        // Content Management System Component
+        const ContentManagementSystem = () => {
+            const [currentView, setCurrentView] = useState('library');
+            const [selectedContent, setSelectedContent] = useState(null);
+            const [uploadProgress, setUploadProgress] = useState(0);
+            const [filterCategory, setFilterCategory] = useState('all');
+            
+            return (
+                <div className="control-system">
+                    <TopBar />
+                    <div className="main-content">
+                        <ContentSidebar currentView={currentView} setCurrentView={setCurrentView} />
+                        <div className="content-main">
+                            {currentView === 'library' && <ContentLibrary filterCategory={filterCategory} setFilterCategory={setFilterCategory} selectedContent={selectedContent} setSelectedContent={setSelectedContent} />}
+                            {currentView === 'upload' && <ContentUpload uploadProgress={uploadProgress} setUploadProgress={setUploadProgress} />}
+                            {currentView === 'templates' && <TemplateManager />}
+                            {currentView === 'deploy' && <ContentDeployment />}
+                        </div>
+                        <ContentPreviewPanel selectedContent={selectedContent} />
+                    </div>
+                    <StatusFooter />
+                </div>
+            );
+        };
+        
+        // Top Bar Component
+        const TopBar = () => {
+            const [currentTime, setCurrentTime] = useState(new Date());
+            
+            useEffect(() => {
+                const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+                return () => clearInterval(timer);
+            }, []);
+            
+            return (
+                <div className="top-bar">
+                    <div className="logo-section">
+                        <div className="logo">TROCADERO</div>
+                        <div className="breadcrumb">
+                            <span><a href="index.html">CONTROL</a> / CONTENT MANAGEMENT</span>
+                        </div>
+                    </div>
+                    
+                    <div className="center-info">
+                        <div className="time-display">
+                            {currentTime.toTimeString().split(' ')[0]}
+                        </div>
+                        <div className="system-info">CONTENT MANAGEMENT v2.1</div>
+                    </div>
+                    
+                    <div className="top-controls">
+                        <div className="upload-status">
+                            <span className="status-indicator online"></span>
+                            STORAGE: 2.3TB / 10TB
+                        </div>
+                        <button className="emergency-btn">EMERGENCY STOP</button>
+                    </div>
+                </div>
+            );
+        };
+        
+        // Content Sidebar
+        const ContentSidebar = ({ currentView, setCurrentView }) => {
+            const menuItems = [
+                { id: 'library', icon: '📁', label: 'CONTENT LIBRARY' },
+                { id: 'upload', icon: '⬆️', label: 'UPLOAD CENTER' },
+                { id: 'templates', icon: '🎨', label: 'TEMPLATE MANAGER' },
+                { id: 'deploy', icon: '🚀', label: 'DEPLOYMENT' }
+            ];
+            
+            return (
+                <div className="side-navigation">
+                    <div className="nav-section">
+                        <div className="nav-title">CONTENT MANAGEMENT</div>
+                        {menuItems.map(item => (
+                            <div 
+                                key={item.id}
+                                className={`nav-item ${currentView === item.id ? 'active' : ''}`}
+                                onClick={() => setCurrentView(item.id)}
+                            >
+                                <span className="nav-icon">{item.icon}</span>
+                                <span className="nav-label">{item.label}</span>
+                            </div>
+                        ))}
+                    </div>
+                    
+                    <div className="nav-section">
+                        <div className="nav-title">QUICK ACTIONS</div>
+                        <div className="nav-item">
+                            <span className="nav-icon">🔄</span>
+                            <span className="nav-label">SYNC ALL</span>
+                        </div>
+                        <div className="nav-item">
+                            <span className="nav-icon">🗑️</span>
+                            <span className="nav-label">CLEANUP</span>
+                        </div>
+                        <div className="nav-item">
+                            <span className="nav-icon">📊</span>
+                            <span className="nav-label">ANALYTICS</span>
+                        </div>
+                    </div>
+                    
+                    <div className="storage-monitor">
+                        <div className="storage-title">STORAGE USAGE</div>
+                        <div className="storage-bar">
+                            <div className="storage-fill" style={{width: '23%'}}></div>
+                        </div>
+                        <div className="storage-stats">
+                            <span>2.3TB used</span>
+                            <span>7.7TB free</span>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+        
+        // Content Library Component
+        const ContentLibrary = ({ filterCategory, setFilterCategory, selectedContent, setSelectedContent }) => {
+            const [viewMode, setViewMode] = useState('grid');
+            const [searchTerm, setSearchTerm] = useState('');
+            
+            const mockContent = [
+                { id: 1, name: 'facade_celebration.mp4', type: 'video', size: '45.2MB', status: 'ready', thumbnail: '🎬', duration: '0:30' },
+                { id: 2, name: 'canopy_ambient.json', type: 'template', size: '2.3KB', status: 'ready', thumbnail: '🎨', duration: '∞' },
+                { id: 3, name: 'stairs_interactive.json', type: 'template', size: '12.7KB', status: 'processing', thumbnail: '📊', duration: '∞' },
+                { id: 4, name: 'promotional_banner.jpg', type: 'image', size: '8.1MB', status: 'ready', thumbnail: '🖼️', duration: '∞' },
+                { id: 5, name: 'main_display_feed.mp4', type: 'video', size: '125.8MB', status: 'ready', thumbnail: '🎬', duration: '2:15' },
+                { id: 6, name: 'emergency_message.txt', type: 'text', size: '0.5KB', status: 'ready', thumbnail: '📝', duration: '∞' }
+            ];
+            
+            const categories = ['all', 'video', 'image', 'template', 'text'];
+            
+            const filteredContent = mockContent.filter(item => {
+                const matchesCategory = filterCategory === 'all' || item.type === filterCategory;
+                const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase());
+                return matchesCategory && matchesSearch;
+            });
+            
+            return (
+                <div className="content-library">
+                    <div className="library-header">
+                        <h2>CONTENT LIBRARY</h2>
+                        <div className="library-controls">
+                            <div className="search-box">
+                                <input 
+                                    type="text" 
+                                    placeholder="SEARCH CONTENT..."
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                    className="search-input"
+                                />
+                            </div>
+                            <div className="filter-controls">
+                                {categories.map(cat => (
+                                    <button 
+                                        key={cat}
+                                        className={`filter-btn ${filterCategory === cat ? 'active' : ''}`}
+                                        onClick={() => setFilterCategory(cat)}
+                                    >
+                                        {cat.toUpperCase()}
+                                    </button>
+                                ))}
+                            </div>
+                            <div className="view-controls">
+                                <button 
+                                    className={`view-btn ${viewMode === 'grid' ? 'active' : ''}`}
+                                    onClick={() => setViewMode('grid')}
+                                >
+                                    ⊞
+                                </button>
+                                <button 
+                                    className={`view-btn ${viewMode === 'list' ? 'active' : ''}`}
+                                    onClick={() => setViewMode('list')}
+                                >
+                                    ☰
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div className={`content-grid ${viewMode}`}>
+                        {filteredContent.map(item => (
+                            <ContentItem 
+                                key={item.id} 
+                                item={item} 
+                                viewMode={viewMode}
+                                isSelected={selectedContent?.id === item.id}
+                                onSelect={() => setSelectedContent(item)}
+                            />
+                        ))}
+                    </div>
+                    
+                    <div className="library-stats">
+                        <div className="stat-group">
+                            <span className="stat-label">TOTAL FILES:</span>
+                            <span className="stat-value">{mockContent.length}</span>
+                        </div>
+                        <div className="stat-group">
+                            <span className="stat-label">FILTERED:</span>
+                            <span className="stat-value">{filteredContent.length}</span>
+                        </div>
+                        <div className="stat-group">
+                            <span className="stat-label">TOTAL SIZE:</span>
+                            <span className="stat-value">191.6MB</span>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+        
+        // Content Item Component
+        const ContentItem = ({ item, viewMode, isSelected, onSelect }) => (
+            <div 
+                className={`content-item ${viewMode} ${isSelected ? 'selected' : ''} ${item.status}`}
+                onClick={onSelect}
+            >
+                <div className="content-thumbnail">
+                    <span className="thumbnail-icon">{item.thumbnail}</span>
+                    <div className={`status-badge ${item.status}`}>
+                        {item.status === 'processing' ? '⏳' : '✓'}
+                    </div>
+                </div>
+                
+                <div className="content-info">
+                    <div className="content-name">{item.name}</div>
+                    <div className="content-details">
+                        <span className="content-type">{item.type.toUpperCase()}</span>
+                        <span className="content-size">{item.size}</span>
+                        <span className="content-duration">{item.duration}</span>
+                    </div>
+                </div>
+                
+                <div className="content-actions">
+                    <button className="action-icon">▶️</button>
+                    <button className="action-icon">⬇️</button>
+                    <button className="action-icon">🗑️</button>
+                </div>
+            </div>
+        );
+        
+        // Content Upload Component
+        const ContentUpload = ({ uploadProgress, setUploadProgress }) => {
+            const [dragActive, setDragActive] = useState(false);
+            const [uploads, setUploads] = useState([]);
+            
+            const handleDrag = (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                if (e.type === "dragenter" || e.type === "dragover") {
+                    setDragActive(true);
+                } else if (e.type === "dragleave") {
+                    setDragActive(false);
+                }
+            };
+            
+            const simulateUpload = (fileName) => {
+                const newUpload = {
+                    id: Date.now(),
+                    name: fileName,
+                    progress: 0,
+                    status: 'uploading'
+                };
+                
+                setUploads(prev => [...prev, newUpload]);
+                
+                const interval = setInterval(() => {
+                    setUploads(prev => prev.map(upload => {
+                        if (upload.id === newUpload.id && upload.progress < 100) {
+                            const newProgress = upload.progress + Math.random() * 15;
+                            if (newProgress >= 100) {
+                                return { ...upload, progress: 100, status: 'complete' };
+                            }
+                            return { ...upload, progress: newProgress };
+                        }
+                        return upload;
+                    }));
+                }, 200);
+                
+                setTimeout(() => clearInterval(interval), 8000);
+            };
+            
+            return (
+                <div className="content-upload">
+                    <div className="upload-header">
+                        <h2>UPLOAD CENTER</h2>
+                        <div className="upload-stats">
+                            <div className="stat-item">
+                                <span className="stat-label">ACTIVE UPLOADS:</span>
+                                <span className="stat-value">{uploads.filter(u => u.status === 'uploading').length}</span>
+                            </div>
+                            <div className="stat-item">
+                                <span className="stat-label">QUEUE SIZE:</span>
+                                <span className="stat-value">{uploads.length}</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div 
+                        className={`upload-zone ${dragActive ? 'drag-active' : ''}`}
+                        onDragEnter={handleDrag}
+                        onDragLeave={handleDrag}
+                        onDragOver={handleDrag}
+                        onDrop={(e) => {
+                            e.preventDefault();
+                            setDragActive(false);
+                            simulateUpload("example_file.mp4");
+                        }}
+                        onClick={() => simulateUpload("clicked_file.jpg")}
+                    >
+                        <div className="upload-icon">📁</div>
+                        <div className="upload-text">
+                            <div className="upload-primary">DROP FILES HERE OR CLICK TO BROWSE</div>
+                            <div className="upload-secondary">
+                                Supported formats: MP4, JPG, PNG, JSON, TXT (Max 500MB per file)
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div className="upload-queue">
+                        <h3>UPLOAD QUEUE</h3>
+                        {uploads.length === 0 ? (
+                            <div className="queue-empty">No active uploads</div>
+                        ) : (
+                            uploads.map(upload => <UploadItem key={upload.id} upload={upload} />)
+                        )}
+                    </div>
+                    
+                    <div className="upload-settings">
+                        <h3>UPLOAD SETTINGS</h3>
+                        <div className="settings-grid">
+                            <div className="setting-item">
+                                <label>AUTO-PROCESS:</label>
+                                <input type="checkbox" checked readOnly />
+                            </div>
+                            <div className="setting-item">
+                                <label>QUALITY:</label>
+                                <select className="setting-select">
+                                    <option>HIGH</option>
+                                    <option>MEDIUM</option>
+                                    <option>LOW</option>
+                                </select>
+                            </div>
+                            <div className="setting-item">
+                                <label>NOTIFICATION:</label>
+                                <input type="checkbox" checked readOnly />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+        
+        // Upload Item Component
+        const UploadItem = ({ upload }) => (
+            <div className={`upload-item ${upload.status}`}>
+                <div className="upload-item-info">
+                    <div className="upload-item-name">{upload.name}</div>
+                    <div className="upload-item-status">{upload.status.toUpperCase()}</div>
+                </div>
+                <div className="upload-progress">
+                    <div className="progress-bar">
+                        <div 
+                            className="progress-fill" 
+                            style={{width: `${upload.progress}%`}}
+                        ></div>
+                    </div>
+                    <div className="progress-text">{Math.round(upload.progress)}%</div>
+                </div>
+                <div className="upload-actions">
+                    {upload.status === 'uploading' && <button className="action-btn danger">⏸️</button>}
+                    {upload.status === 'complete' && <button className="action-btn success">✓</button>}
+                </div>
+            </div>
+        );
+        
+        // Template Manager Component
+        const TemplateManager = () => (
+            <div className="template-manager">
+                <div className="template-header">
+                    <h2>TEMPLATE MANAGER</h2>
+                    <button className="create-template-btn">+ CREATE NEW TEMPLATE</button>
+                </div>
+                
+                <div className="template-categories">
+                    <div className="category-card">
+                        <div className="category-icon">🏢</div>
+                        <div className="category-name">FACADE LIGHTING</div>
+                        <div className="category-count">12 templates</div>
+                    </div>
+                    <div className="category-card">
+                        <div className="category-icon">🔆</div>
+                        <div className="category-name">CANOPY PATTERNS</div>
+                        <div className="category-count">8 templates</div>
+                    </div>
+                    <div className="category-card">
+                        <div className="category-icon">📶</div>
+                        <div className="category-name">INTERACTIVE MODES</div>
+                        <div className="category-count">15 templates</div>
+                    </div>
+                    <div className="category-card">
+                        <div className="category-icon">🖥️</div>
+                        <div className="category-name">DISPLAY LAYOUTS</div>
+                        <div className="category-count">23 templates</div>
+                    </div>
+                </div>
+                
+                <div className="template-editor">
+                    <h3>TEMPLATE EDITOR</h3>
+                    <div className="editor-placeholder">
+                        <div className="editor-icon">🎨</div>
+                        <div className="editor-text">Select a template category to begin editing</div>
+                    </div>
+                </div>
+            </div>
+        );
+        
+        // Content Deployment Component
+        const ContentDeployment = () => (
+            <div className="content-deployment">
+                <div className="deployment-header">
+                    <h2>CONTENT DEPLOYMENT</h2>
+                    <div className="deployment-status">
+                        <span className="status-indicator online"></span>
+                        ALL CANVASES READY
+                    </div>
+                </div>
+                
+                <div className="deployment-grid">
+                    <div className="canvas-targets">
+                        <h3>TARGET CANVASES</h3>
+                        <div className="canvas-list">
+                            <CanvasTarget name="FACADE LIGHTING" status="online" />
+                            <CanvasTarget name="LED CANOPY" status="online" />
+                            <CanvasTarget name="INTERIOR STAIRS" status="online" />
+                            <CanvasTarget name="VIDEO WALL" status="maintenance" />
+                            <CanvasTarget name="MAIN DISPLAY" status="online" />
+                        </div>
+                    </div>
+                    
+                    <div className="deployment-queue">
+                        <h3>DEPLOYMENT QUEUE</h3>
+                        <div className="queue-item">
+                            <div className="queue-content">evening_show.mp4</div>
+                            <div className="queue-target">→ FACADE + CANOPY</div>
+                            <div className="queue-time">18:00</div>
+                        </div>
+                        <div className="queue-item">
+                            <div className="queue-content">interactive_mode.json</div>
+                            <div className="queue-target">→ STAIRS</div>
+                            <div className="queue-time">20:30</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div className="deployment-controls">
+                    <button className="deploy-btn primary">DEPLOY NOW</button>
+                    <button className="deploy-btn secondary">SCHEDULE DEPLOYMENT</button>
+                    <button className="deploy-btn danger">EMERGENCY STOP ALL</button>
+                </div>
+            </div>
+        );
+        
+        // Canvas Target Component
+        const CanvasTarget = ({ name, status }) => (
+            <div className={`canvas-target ${status}`}>
+                <div className="target-info">
+                    <div className="target-name">{name}</div>
+                    <div className={`target-status ${status}`}>
+                        <span className="status-indicator"></span>
+                        {status.toUpperCase()}
+                    </div>
+                </div>
+                <div className="target-controls">
+                    <input type="checkbox" checked={status === 'online'} readOnly />
+                </div>
+            </div>
+        );
+        
+        // Content Preview Panel
+        const ContentPreviewPanel = ({ selectedContent }) => (
+            <div className="content-preview-panel">
+                <div className="preview-header">
+                    <h3>CONTENT PREVIEW</h3>
+                    {selectedContent && (
+                        <div className="preview-actions">
+                            <button className="preview-btn">🔍</button>
+                            <button className="preview-btn">⬇️</button>
+                            <button className="preview-btn">🚀</button>
+                        </div>
+                    )}
+                </div>
+                
+                {selectedContent ? (
+                    <div className="preview-content">
+                        <div className="preview-display">
+                            <div className="preview-placeholder">
+                                <span className="preview-icon">{selectedContent.thumbnail}</span>
+                                <div className="preview-name">{selectedContent.name}</div>
+                            </div>
+                        </div>
+                        
+                        <div className="preview-details">
+                            <div className="detail-item">
+                                <span className="detail-label">TYPE:</span>
+                                <span className="detail-value">{selectedContent.type.toUpperCase()}</span>
+                            </div>
+                            <div className="detail-item">
+                                <span className="detail-label">SIZE:</span>
+                                <span className="detail-value">{selectedContent.size}</span>
+                            </div>
+                            <div className="detail-item">
+                                <span className="detail-label">DURATION:</span>
+                                <span className="detail-value">{selectedContent.duration}</span>
+                            </div>
+                            <div className="detail-item">
+                                <span className="detail-label">STATUS:</span>
+                                <span className={`detail-value ${selectedContent.status}`}>
+                                    {selectedContent.status.toUpperCase()}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                ) : (
+                    <div className="preview-empty">
+                        <div className="empty-icon">👁️</div>
+                        <div className="empty-text">Select content to preview</div>
+                    </div>
+                )}
+            </div>
+        );
+        
+        // Status Footer
+        const StatusFooter = () => (
+            <div className="status-footer">
+                <div className="footer-section">
+                    <span className="footer-label">CONTENT FILES:</span>
+                    <span className="footer-value">247</span>
+                </div>
+                <div className="footer-section">
+                    <span className="footer-label">STORAGE USED:</span>
+                    <span className="footer-value">2.3TB</span>
+                </div>
+                <div className="footer-section">
+                    <span className="footer-label">ACTIVE UPLOADS:</span>
+                    <span className="footer-value">0</span>
+                </div>
+                <div className="footer-section">
+                    <span className="footer-label">LAST SYNC:</span>
+                    <span className="footer-value">5 min ago</span>
+                </div>
+            </div>
+        );
+        
+        // Background Animation - Initialize after DOM is ready
+        window.addEventListener('DOMContentLoaded', () => {
+            const canvas = document.getElementById('background-canvas');
+            const ctx = canvas.getContext('2d');
+            
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            
+            const particles = [];
+            for (let i = 0; i < 30; i++) {
+                particles.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    vx: (Math.random() - 0.5) * 0.3,
+                    vy: (Math.random() - 0.5) * 0.3,
+                    size: Math.random() * 1.5
+                });
+            }
+            
+            const animate = () => {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = 'rgba(220, 20, 60, 0.08)';
+                
+                particles.forEach(particle => {
+                    particle.x += particle.vx;
+                    particle.y += particle.vy;
+                    
+                    if (particle.x < 0 || particle.x > canvas.width) particle.vx *= -1;
+                    if (particle.y < 0 || particle.y > canvas.height) particle.vy *= -1;
+                    
+                    ctx.beginPath();
+                    ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
+                    ctx.fill();
+                });
+                
+                requestAnimationFrame(animate);
+            };
+            
+            animate();
+        });
+        
+        // Render the app
+        ReactDOM.render(<ContentManagementSystem />, document.getElementById('root'));
+    </script>
+</body>
+</html>

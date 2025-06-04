@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Schedule Management - Trocadero Control System</title>
+    <link rel="stylesheet" href="styles/main.css">
+    <link rel="stylesheet" href="styles/schedule-management.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Roboto+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+</head>
+<body>
+    <div id="root"></div>
+    <canvas id="background-canvas"></canvas>
+    
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+        
+        // Schedule Management System Component
+        const ScheduleManagementSystem = () => {
+            const [currentView, setCurrentView] = useState('calendar');
+            const [selectedDate, setSelectedDate] = useState(new Date());
+            const [selectedEvent, setSelectedEvent] = useState(null);
+            const [showCreateModal, setShowCreateModal] = useState(false);
+            
+            return (
+                <div className="control-system">
+                    <TopBar />
+                    <div className="main-content">
+                        <ScheduleSidebar currentView={currentView} setCurrentView={setCurrentView} />
+                        <div className="schedule-main">
+                            {currentView === 'calendar' && (
+                                <CalendarView 
+                                    selectedDate={selectedDate} 
+                                    setSelectedDate={setSelectedDate}
+                                    selectedEvent={selectedEvent}
+                                    setSelectedEvent={setSelectedEvent}
+                                    setShowCreateModal={setShowCreateModal}
+                                />
+                            )}
+                            {currentView === 'timeline' && <TimelineView />}
+                            {currentView === 'templates' && <ScheduleTemplates />}
+                            {currentView === 'automation' && <AutomationRules />}
+                        </div>
+                        <ScheduleDetailsPanel 
+                            selectedEvent={selectedEvent} 
+                            setSelectedEvent={setSelectedEvent}
+                            showCreateModal={showCreateModal}
+                            setShowCreateModal={setShowCreateModal}
+                        />
+                    </div>
+                    <StatusFooter />
+                </div>
+            );
+        };
+        
+        // Top Bar Component
+        const TopBar = () => {
+            const [currentTime, setCurrentTime] = useState(new Date());
+            
+            useEffect(() => {
+                const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+                return () => clearInterval(timer);
+            }, []);
+            
+            return (
+                <div className="top-bar">
+                    <div className="logo-section">
+                        <div className="logo">TROCADERO</div>
+                        <div className="breadcrumb">
+                            <span><a href="index.html">CONTROL</a> / SCHEDULE MANAGEMENT</span>
+                        </div>
+                    </div>
+                    
+                    <div className="center-info">
+                        <div className="time-display">
+                            {currentTime.toTimeString().split(' ')[0]}
+                        </div>
+                        <div className="system-info">SCHEDULE CONTROL v2.1</div>
+                    </div>
+                    
+                    <div className="top-controls">
+                        <div className="sync-status">
+                            <span className="status-indicator online"></span>
+                            SYNC: ACTIVE
+                        </div>
+                        <button className="emergency-btn">OVERRIDE ALL</button>
+                    </div>
+                </div>
+            );
+        };
+        
+        // Schedule Sidebar
+        const ScheduleSidebar = ({ currentView, setCurrentView }) => {
+            const menuItems = [
+                { id: 'calendar', icon: '📅', label: 'CALENDAR VIEW' },
+                { id: 'timeline', icon: '⏱️', label: 'TIMELINE' },
+                { id: 'templates', icon: '📋', label: 'TEMPLATES' },
+                { id: 'automation', icon: '🤖', label: 'AUTOMATION' }
+            ];
+            
+            const upcomingEvents = [
+                { time: '14:30', name: 'Afternoon Ambience', canvas: 'Canopy' },
+                { time: '18:00', name: 'Evening Show', canvas: 'Facade + Canopy' },
+                { time: '20:30', name: 'Interactive Mode', canvas: 'Stairs' },
+                { time: '22:00', name: 'Night Lighting', canvas: 'All Canvases' }
+            ];
+            
+            return (
+                <div className="side-navigation">
+                    <div className="nav-section">
+                        <div className="nav-title">SCHEDULE VIEWS</div>
+                        {menuItems.map(item => (
+                            <div 
+                                key={item.id}
+                                className={`nav-item ${currentView === item.id ? 'active' : ''}`}
+                                onClick={() => setCurrentView(item.id)}
+                            >
+                                <span className="nav-icon">{item.icon}</span>
+                                <span className="nav-label">{item.label}</span>
+                            </div>
+                        ))}
+                    </div>
+                    
+                    <div className="nav-section">
+                        <div className="nav-title">QUICK ACTIONS</div>
+                        <div className="nav-item">
+                            <span className="nav-icon">➕</span>
+                            <span className="nav-label">NEW EVENT</span>
+                        </div>
+                        <div className="nav-item">
+                            <span className="nav-icon">🔄</span>
+                            <span className="nav-label">SYNC ALL</span>
+                        </div>
+                        <div className="nav-item">
+                            <span className="nav-icon">⚡</span>
+                            <span className="nav-label">EMERGENCY CLEAR</span>
+                        </div>
+                    </div>
+                    
+                    <div className="upcoming-events">
+                        <div className="events-title">UPCOMING EVENTS</div>
+                        <div className="events-list">
+                            {upcomingEvents.map((event, index) => (
+                                <div key={index} className="event-item">
+                                    <div className="event-time">{event.time}</div>
+                                    <div className="event-details">
+                                        <div className="event-name">{event.name}</div>
+                                        <div className="event-canvas">{event.canvas}</div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+        
+        // Calendar View Component
+        const CalendarView = ({ selectedDate, setSelectedDate, selectedEvent, setSelectedEvent, setShowCreateModal }) => {
+            const [calendarView, setCalendarView] = useState('week');
+            
+            const mockEvents = [
+                { id: 1, time: '09:00', duration: 60, title: 'Morning Fade In', canvas: 'Facade', type: 'lighting', status: 'scheduled' },
+                { id: 2, time: '12:00', duration: 30, title: 'Lunch Promo', canvas: 'Video Wall', type: 'content', status: 'active' },
+                { id: 3, time: '14:30', duration: 120, title: 'Afternoon Ambience', canvas: 'Canopy', type: 'lighting', status: 'scheduled' },
+                { id: 4, time: '18:00', duration: 45, title: 'Evening Show', canvas: 'Facade + Canopy', type: 'sequence', status: 'scheduled' },
+                { id: 5, time: '20:30', duration: 180, title: 'Interactive Mode', canvas: 'Stairs', type: 'interactive', status: 'scheduled' },
+                { id: 6, time: '22:00', duration: 480, title: 'Night Lighting', canvas: 'All Canvases', type: 'lighting', status: 'scheduled' }
+            ];
+            
+            return (
+                <div className="calendar-view">
+                    <div className="calendar-header">
+                        <div className="calendar-title">
+                            <h2>SCHEDULE CALENDAR</h2>
+                            <div className="calendar-date">
+                                {selectedDate.toDateString()}
+                            </div>
+                        </div>
+                        
+                        <div className="calendar-controls">
+                            <div className="view-selector">
+                                <button 
+                                    className={`view-btn ${calendarView === 'day' ? 'active' : ''}`}
+                                    onClick={() => setCalendarView('day')}
+                                >
+                                    DAY
+                                </button>
+                                <button 
+                                    className={`view-btn ${calendarView === 'week' ? 'active' : ''}`}
+                                    onClick={() => setCalendarView('week')}
+                                >
+                                    WEEK
+                                </button>
+                                <button 
+                                    className={`view-btn ${calendarView === 'month' ? 'active' : ''}`}
+                                    onClick={() => setCalendarView('month')}
+                                >
+                                    MONTH
+                                </button>
+                            </div>
+                            
+                            <div className="date-navigation">
+                                <button className="nav-btn">◀</button>
+                                <button className="nav-btn today-btn">TODAY</button>
+                                <button className="nav-btn">▶</button>
+                            </div>
+                            
+                            <button 
+                                className="create-event-btn"
+                                onClick={() => setShowCreateModal(true)}
+                            >
+                                + CREATE EVENT
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div className="calendar-grid">
+                        <CalendarGrid 
+                            view={calendarView} 
+                            events={mockEvents}
+                            selectedEvent={selectedEvent}
+                            setSelectedEvent={setSelectedEvent}
+                        />
+                    </div>
+                    
+                    <div className="calendar-legend">
+                        <div className="legend-item">
+                            <div className="legend-color lighting"></div>
+                            <span>LIGHTING</span>
+                        </div>
+                        <div className="legend-item">
+                            <div className="legend-color content"></div>
+                            <span>CONTENT</span>
+                        </div>
+                        <div className="legend-item">
+                            <div className="legend-color sequence"></div>
+                            <span>SEQUENCE</span>
+                        </div>
+                        <div className="legend-item">
+                            <div className="legend-color interactive"></div>
+                            <span>INTERACTIVE</span>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+        
+        // Calendar Grid Component
+        const CalendarGrid = ({ view, events, selectedEvent, setSelectedEvent }) => {
+            const hours = Array.from({ length: 24 }, (_, i) => i);
+            const days = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
+            
+            const getEventStyle = (event) => {
+                const hour = parseInt(event.time.split(':')[0]);
+                const minute = parseInt(event.time.split(':')[1]);
+                const top = (hour * 60 + minute) / 60 * 60; // 60px per hour
+                const height = event.duration / 60 * 60;
+                
+                return {
+                    top: `${top}px`,
+                    height: `${height}px`
+                };
+            };
+            
+            if (view === 'week') {
+                return (
+                    <div className="week-view">
+                        <div className="time-column">
+                            <div className="time-header"></div>
+                            {hours.map(hour => (
+                                <div key={hour} className="time-slot">
+                                    {hour.toString().padStart(2, '0')}:00
+                                </div>
+                            ))}
+                        </div>
+                        
+                        {days.map((day, dayIndex) => (
+                            <div key={day} className="day-column">
+                                <div className="day-header">{day}</div>
+                                <div className="events-container">
+                                    {hours.map(hour => (
+                                        <div key={hour} className="hour-slot"></div>
+                                    ))}
+                                    {dayIndex === 3 && events.map(event => ( // Show events on Thursday for demo
+                                        <div
+                                            key={event.id}
+                                            className={`calendar-event ${event.type} ${selectedEvent?.id === event.id ? 'selected' : ''}`}
+                                            style={getEventStyle(event)}
+                                            onClick={() => setSelectedEvent(event)}
+                                        >
+                                            <div className="event-title">{event.title}</div>
+                                            <div className="event-time">{event.time}</div>
+                                            <div className="event-canvas">{event.canvas}</div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                );
+            }
+            
+            return <div className="calendar-placeholder">Calendar view: {view}</div>;
+        };
+        
+        // Timeline View Component
+        const TimelineView = () => (
+            <div className="timeline-view">
+                <div className="timeline-header">
+                    <h2>EXECUTION TIMELINE</h2>
+                    <div className="timeline-controls">
+                        <button className="timeline-btn">LIVE VIEW</button>
+                        <button className="timeline-btn">REPLAY</button>
+                        <button className="timeline-btn">SIMULATE</button>
+                    </div>
+                </div>
+                
+                <div className="timeline-container">
+                    <TimelineChart />
+                </div>
+            </div>
+        );
+        
+        // Timeline Chart Component
+        const TimelineChart = () => {
+            const canvasRef = useRef(null);
+            
+            useEffect(() => {
+                const canvas = canvasRef.current;
+                const ctx = canvas.getContext('2d');
+                
+                // Timeline visualization
+                const drawTimeline = () => {
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    
+                    // Draw timeline axis
+                    ctx.strokeStyle = '#DC143C';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.moveTo(50, canvas.height / 2);
+                    ctx.lineTo(canvas.width - 50, canvas.height / 2);
+                    ctx.stroke();
+                    
+                    // Draw time markers
+                    ctx.fillStyle = '#FFFFFF';
+                    ctx.font = '12px Orbitron';
+                    for (let i = 0; i < 24; i += 3) {
+                        const x = 50 + (i / 24) * (canvas.width - 100);
+                        ctx.beginPath();
+                        ctx.moveTo(x, canvas.height / 2 - 10);
+                        ctx.lineTo(x, canvas.height / 2 + 10);
+                        ctx.stroke();
+                        
+                        ctx.fillText(`${i.toString().padStart(2, '0')}:00`, x - 15, canvas.height / 2 + 30);
+                    }
+                    
+                    // Draw events
+                    const events = [
+                        { start: 9, duration: 1, color: '#00FF7F', name: 'Morning' },
+                        { start: 12, duration: 0.5, color: '#00BFFF', name: 'Lunch' },
+                        { start: 18, duration: 0.75, color: '#DC143C', name: 'Evening' },
+                        { start: 20.5, duration: 3, color: '#FF6B35', name: 'Interactive' }
+                    ];
+                    
+                    events.forEach(event => {
+                        const startX = 50 + (event.start / 24) * (canvas.width - 100);
+                        const width = (event.duration / 24) * (canvas.width - 100);
+                        
+                        ctx.fillStyle = event.color;
+                        ctx.fillRect(startX, canvas.height / 2 - 20, width, 40);
+                        
+                        ctx.fillStyle = '#000000';
+                        ctx.font = '10px Orbitron';
+                        ctx.fillText(event.name, startX + 5, canvas.height / 2 + 5);
+                    });
+                };
+                
+                drawTimeline();
+            }, []);
+            
+            return (
+                <canvas 
+                    ref={canvasRef} 
+                    width="800" 
+                    height="200" 
+                    className="timeline-canvas"
+                />
+            );
+        };
+        
+        // Schedule Templates Component
+        const ScheduleTemplates = () => (
+            <div className="schedule-templates">
+                <div className="templates-header">
+                    <h2>SCHEDULE TEMPLATES</h2>
+                    <button className="create-template-btn">+ NEW TEMPLATE</button>
+                </div>
+                
+                <div className="templates-grid">
+                    <TemplateCard 
+                        name="Weekday Standard" 
+                        description="Standard weekday lighting schedule"
+                        events={12}
+                        type="lighting"
+                    />
+                    <TemplateCard 
+                        name="Weekend Entertainment" 
+                        description="Enhanced weekend experience"
+                        events={8}
+                        type="sequence"
+                    />
+                    <TemplateCard 
+                        name="Special Event" 
+                        description="Holiday and celebration modes"
+                        events={15}
+                        type="interactive"
+                    />
+                    <TemplateCard 
+                        name="Maintenance Mode" 
+                        description="Reduced lighting for maintenance"
+                        events={4}
+                        type="content"
+                    />
+                </div>
+            </div>
+        );
+        
+        // Template Card Component
+        const TemplateCard = ({ name, description, events, type }) => (
+            <div className={`template-card ${type}`}>
+                <div className="template-header">
+                    <div className="template-name">{name}</div>
+                    <div className={`template-type ${type}`}>{type.toUpperCase()}</div>
+                </div>
+                <div className="template-description">{description}</div>
+                <div className="template-stats">
+                    <div className="stat-item">
+                        <span className="stat-value">{events}</span>
+                        <span className="stat-label">EVENTS</span>
+                    </div>
+                </div>
+                <div className="template-actions">
+                    <button className="template-btn">PREVIEW</button>
+                    <button className="template-btn">APPLY</button>
+                    <button className="template-btn">EDIT</button>
+                </div>
+            </div>
+        );
+        
+        // Automation Rules Component
+        const AutomationRules = () => (
+            <div className="automation-rules">
+                <div className="automation-header">
+                    <h2>AUTOMATION RULES</h2>
+                    <button className="create-rule-btn">+ NEW RULE</button>
+                </div>
+                
+                <div className="rules-list">
+                    <AutomationRule 
+                        name="Sunrise/Sunset Sync"
+                        trigger="Solar Schedule"
+                        action="Adjust Facade Brightness"
+                        status="active"
+                    />
+                    <AutomationRule 
+                        name="Occupancy Response"
+                        trigger="Motion Sensors"
+                        action="Enable Interactive Mode"
+                        status="active"
+                    />
+                    <AutomationRule 
+                        name="Weather Adaptation"
+                        trigger="Weather API"
+                        action="Adjust Color Temperature"
+                        status="inactive"
+                    />
+                    <AutomationRule 
+                        name="Emergency Protocol"
+                        trigger="Emergency Signal"
+                        action="Override All Displays"
+                        status="standby"
+                    />
+                </div>
+            </div>
+        );
+        
+        // Automation Rule Component
+        const AutomationRule = ({ name, trigger, action, status }) => (
+            <div className={`automation-rule ${status}`}>
+                <div className="rule-header">
+                    <div className="rule-name">{name}</div>
+                    <div className={`rule-status ${status}`}>
+                        <span className="status-indicator"></span>
+                        {status.toUpperCase()}
+                    </div>
+                </div>
+                <div className="rule-details">
+                    <div className="rule-trigger">
+                        <span className="rule-label">TRIGGER:</span>
+                        <span className="rule-value">{trigger}</span>
+                    </div>
+                    <div className="rule-action">
+                        <span className="rule-label">ACTION:</span>
+                        <span className="rule-value">{action}</span>
+                    </div>
+                </div>
+                <div className="rule-controls">
+                    <button className="rule-btn">EDIT</button>
+                    <button className="rule-btn">TEST</button>
+                    <button className={`rule-btn ${status === 'active' ? 'disable' : 'enable'}`}>
+                        {status === 'active' ? 'DISABLE' : 'ENABLE'}
+                    </button>
+                </div>
+            </div>
+        );
+        
+        // Schedule Details Panel
+        const ScheduleDetailsPanel = ({ selectedEvent, setSelectedEvent, showCreateModal, setShowCreateModal }) => (
+            <div className="schedule-details-panel">
+                {showCreateModal ? (
+                    <CreateEventModal setShowCreateModal={setShowCreateModal} />
+                ) : selectedEvent ? (
+                    <EventDetails event={selectedEvent} setSelectedEvent={setSelectedEvent} />
+                ) : (
+                    <EmptyPanel />
+                )}
+            </div>
+        );
+        
+        // Create Event Modal Component
+        const CreateEventModal = ({ setShowCreateModal }) => (
+            <div className="create-event-modal">
+                <div className="modal-header">
+                    <h3>CREATE NEW EVENT</h3>
+                    <button 
+                        className="close-btn"
+                        onClick={() => setShowCreateModal(false)}
+                    >
+                        ✕
+                    </button>
+                </div>
+                
+                <div className="modal-content">
+                    <div className="form-group">
+                        <label>EVENT NAME:</label>
+                        <input type="text" placeholder="Enter event name..." className="form-input" />
+                    </div>
+                    
+                    <div className="form-group">
+                        <label>CANVAS TARGET:</label>
+                        <select className="form-select">
+                            <option>Facade Lighting</option>
+                            <option>LED Canopy</option>
+                            <option>Interior Stairs</option>
+                            <option>Video Wall</option>
+                            <option>Main Display</option>
+                            <option>All Canvases</option>
+                        </select>
+                    </div>
+                    
+                    <div className="form-row">
+                        <div className="form-group">
+                            <label>START TIME:</label>
+                            <input type="time" className="form-input" />
+                        </div>
+                        <div className="form-group">
+                            <label>DURATION:</label>
+                            <input type="number" placeholder="Minutes" className="form-input" />
+                        </div>
+                    </div>
+                    
+                    <div className="form-group">
+                        <label>EVENT TYPE:</label>
+                        <select className="form-select">
+                            <option>Lighting Sequence</option>
+                            <option>Content Display</option>
+                            <option>Interactive Mode</option>
+                            <option>Celebration</option>
+                        </select>
+                    </div>
+                    
+                    <div className="form-group">
+                        <label>RECURRENCE:</label>
+                        <select className="form-select">
+                            <option>One Time</option>
+                            <option>Daily</option>
+                            <option>Weekly</option>
+                            <option>Monthly</option>
+                            <option>Custom</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div className="modal-actions">
+                    <button className="modal-btn primary">CREATE EVENT</button>
+                    <button 
+                        className="modal-btn secondary"
+                        onClick={() => setShowCreateModal(false)}
+                    >
+                        CANCEL
+                    </button>
+                </div>
+            </div>
+        );
+        
+        // Event Details Component
+        const EventDetails = ({ event, setSelectedEvent }) => (
+            <div className="event-details">
+                <div className="details-header">
+                    <h3>EVENT DETAILS</h3>
+                    <button 
+                        className="close-btn"
+                        onClick={() => setSelectedEvent(null)}
+                    >
+                        ✕
+                    </button>
+                </div>
+                
+                <div className="details-content">
+                    <div className="detail-section">
+                        <div className="detail-title">{event.title}</div>
+                        <div className={`detail-status ${event.status}`}>
+                            <span className="status-indicator"></span>
+                            {event.status.toUpperCase()}
+                        </div>
+                    </div>
+                    
+                    <div className="detail-info">
+                        <div className="info-item">
+                            <span className="info-label">TIME:</span>
+                            <span className="info-value">{event.time}</span>
+                        </div>
+                        <div className="info-item">
+                            <span className="info-label">DURATION:</span>
+                            <span className="info-value">{event.duration} min</span>
+                        </div>
+                        <div className="info-item">
+                            <span className="info-label">CANVAS:</span>
+                            <span className="info-value">{event.canvas}</span>
+                        </div>
+                        <div className="info-item">
+                            <span className="info-label">TYPE:</span>
+                            <span className="info-value">{event.type.toUpperCase()}</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div className="details-actions">
+                    <button className="detail-btn primary">EDIT</button>
+                    <button className="detail-btn secondary">DUPLICATE</button>
+                    <button className="detail-btn danger">DELETE</button>
+                </div>
+            </div>
+        );
+        
+        // Empty Panel Component
+        const EmptyPanel = () => (
+            <div className="empty-panel">
+                <div className="empty-icon">📅</div>
+                <div className="empty-text">Select an event or create a new one</div>
+            </div>
+        );
+        
+        // Status Footer
+        const StatusFooter = () => (
+            <div className="status-footer">
+                <div className="footer-section">
+                    <span className="footer-label">SCHEDULED EVENTS:</span>
+                    <span className="footer-value">24</span>
+                </div>
+                <div className="footer-section">
+                    <span className="footer-label">ACTIVE RULES:</span>
+                    <span className="footer-value">8</span>
+                </div>
+                <div className="footer-section">
+                    <span className="footer-label">NEXT EVENT:</span>
+                    <span className="footer-value">14:30</span>
+                </div>
+                <div className="footer-section">
+                    <span className="footer-label">SYNC STATUS:</span>
+                    <span className="footer-value">OK</span>
+                </div>
+            </div>
+        );
+        
+        // Background Animation - Initialize after DOM is ready
+        window.addEventListener('DOMContentLoaded', () => {
+            const canvas = document.getElementById('background-canvas');
+            const ctx = canvas.getContext('2d');
+            
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            
+            const particles = [];
+            for (let i = 0; i < 40; i++) {
+                particles.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    vx: (Math.random() - 0.5) * 0.4,
+                    vy: (Math.random() - 0.5) * 0.4,
+                    size: Math.random() * 2
+                });
+            }
+            
+            const animate = () => {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = 'rgba(220, 20, 60, 0.06)';
+                
+                particles.forEach(particle => {
+                    particle.x += particle.vx;
+                    particle.y += particle.vy;
+                    
+                    if (particle.x < 0 || particle.x > canvas.width) particle.vx *= -1;
+                    if (particle.y < 0 || particle.y > canvas.height) particle.vy *= -1;
+                    
+                    ctx.beginPath();
+                    ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
+                    ctx.fill();
+                });
+                
+                requestAnimationFrame(animate);
+            };
+            
+            animate();
+        });
+        
+        // Render the app
+        ReactDOM.render(<ScheduleManagementSystem />, document.getElementById('root'));
+    </script>
+</body>
+</html>
